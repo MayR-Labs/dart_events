@@ -1,6 +1,6 @@
 name: mayr_events
 description: "A lightweight, expressive event and listener system for Flutter and Dart, inspired by Laravel's event architecture."
-version: 0.0.1
+version: 1.0.0
 homepage: https://github.com/YoungMayor/mayr_flutter_events
 repository: https://github.com/YoungMayor/mayr_flutter_events
 issue_tracker: https://github.com/YoungMayor/mayr_flutter_events/issues
