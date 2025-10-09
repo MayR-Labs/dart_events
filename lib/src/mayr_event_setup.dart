@@ -87,11 +87,7 @@ abstract class MayrEventSetup {
   ///   await ErrorReporter.report(error, stack);
   /// }
   /// ```
-  Future<void> onError(
-    MayrEvent event,
-    Object error,
-    StackTrace stack,
-  ) async {}
+  Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {}
 
   /// Initializes the event system.
   ///

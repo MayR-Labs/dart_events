@@ -136,10 +136,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Mayr Events Example',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        useMaterial3: true,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
       home: const EventExamplePage(),
     );
   }
@@ -165,9 +162,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing UserRegisteredEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(
-      UserRegisteredEvent(userId, email),
-    );
+    await MayrEvents.instance.fire(UserRegisteredEvent(userId, email));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -188,9 +183,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing OrderPlacedEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(
-      OrderPlacedEvent(orderId, total),
-    );
+    await MayrEvents.instance.fire(OrderPlacedEvent(orderId, total));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -222,10 +215,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mayr Events Example'),
-        elevation: 2,
-      ),
+      appBar: AppBar(title: const Text('Mayr Events Example'), elevation: 2),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -233,10 +223,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
           children: [
             const Text(
               'Mayr Events Demo',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

@@ -196,6 +196,15 @@ Please make sure to:
 
 > Let's build something amazing together!
 
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### 📚 Additional Documentation
+
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Detailed guidelines for contributors
+- **[TESTING.md](TESTING.md)** - Information about running and writing tests
+- **[DESIGN.md](DESIGN.md)** - Architecture and design decisions
+- **[example/](example/)** - Working Flutter example application
+
 ---
 
 ### 🐛 Reporting Issues

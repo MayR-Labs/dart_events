@@ -42,7 +42,7 @@ class MayrEvents {
   /// This is called when a listener throws an exception.
   /// If not set, errors will be silently ignored.
   Future<void> Function(MayrEvent event, Object error, StackTrace stack)?
-      onError;
+  onError;
 
   /// Registers a listener for a specific event type.
   ///
