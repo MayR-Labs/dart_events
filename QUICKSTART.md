@@ -24,7 +24,7 @@ flutter pub get
 Create a new file `events/user_events.dart`:
 
 ```dart
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 
 class UserRegisteredEvent extends MayrEvent {
   final String userId;
@@ -39,7 +39,7 @@ class UserRegisteredEvent extends MayrEvent {
 Create a new file `listeners/welcome_email_listener.dart`:
 
 ```dart
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 import '../events/user_events.dart';
 
 class SendWelcomeEmailListener extends MayrListener<UserRegisteredEvent> {
@@ -61,7 +61,7 @@ class SendWelcomeEmailListener extends MayrListener<UserRegisteredEvent> {
 Create `config/app_events.dart`:
 
 ```dart
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 import '../events/user_events.dart';
 import '../listeners/welcome_email_listener.dart';
 
@@ -120,7 +120,7 @@ In any screen or widget:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 import '../events/user_events.dart';
 
 class RegisterScreen extends StatelessWidget {

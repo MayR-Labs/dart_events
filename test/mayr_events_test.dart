@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 
 // Test events
 class TestEvent extends MayrEvent {

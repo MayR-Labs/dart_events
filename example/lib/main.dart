@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 
 // ============================================================================
 // 1. Define Events

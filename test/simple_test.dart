@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:mayr_events/mayr_flutter_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 
 // Simple test events
 class TestEvent extends MayrEvent {
@@ -63,7 +63,7 @@ void main() async {
   int passed = 0;
   int failed = 0;
 
-  void test(String name, Future<void> Function() testFn) async {
+  Future<void> test(String name, Future<void> Function() testFn) async {
     try {
       // Reset before each test
       MayrEvents.instance.clear();

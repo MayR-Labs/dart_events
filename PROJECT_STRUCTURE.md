@@ -12,10 +12,10 @@ mayr_flutter_events/
 │   │   ├── mayr_listener.dart        # Base listener class
 │   │   ├── mayr_events.dart          # Event bus implementation
 │   │   └── mayr_event_setup.dart     # Setup/configuration class
-│   └── mayr_flutter_events.dart      # Main export file
+│   └── mayr_events.dart      # Main export file
 │
 ├── test/                       # Tests
-│   ├── mayr_flutter_events_test.dart # Complete test suite (350+ lines)
+│   ├── mayr_events_test.dart # Complete test suite (350+ lines)
 │   └── simple_test.dart              # Standalone verification test
 │
 ├── example/                    # Example Flutter app
@@ -45,11 +45,11 @@ mayr_flutter_events/
 
 ## Source Files
 
-### lib/mayr_flutter_events.dart
+### lib/mayr_events.dart
 Main entry point that exports all public APIs. This is what users import.
 
 ```dart
-library mayr_flutter_events;
+library mayr_events;
 
 export 'src/mayr_event.dart';
 export 'src/mayr_listener.dart';
@@ -94,7 +94,7 @@ Base class for application-level event configuration.
 
 ## Test Files
 
-### test/mayr_flutter_events_test.dart
+### test/mayr_events_test.dart
 Comprehensive test suite using Flutter's test framework.
 
 **Coverage:**
@@ -241,8 +241,8 @@ GitHub Actions CI configuration.
 When adding features to mayr_events:
 
 1. **Add implementation** in `lib/src/`
-2. **Export from** `lib/mayr_flutter_events.dart`
-3. **Add tests** in `test/mayr_flutter_events_test.dart`
+2. **Export from** `lib/mayr_events.dart`
+3. **Add tests** in `test/mayr_events_test.dart`
 4. **Document in:**
    - Dartdoc comments (in code)
    - API.md (API reference)
