@@ -91,9 +91,9 @@ class MayrEvents {
       try {
         // Execute listener in isolate or main thread
         if (listener.runInIsolate) {
-          await Isolate.run(() => listener.handle(event as T));
+          await Isolate.run(() => listener.handle(event));
         } else {
-          await listener.handle(event as T);
+          await listener.handle(event);
         }
 
         // Remove once-only listeners after successful execution

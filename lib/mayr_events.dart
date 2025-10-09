@@ -5,7 +5,7 @@
 /// middleware hooks, and more.
 ///
 /// Inspired by Laravel's event architecture.
-library mayr_events;
+library;
 
 export 'src/mayr_event.dart';
 export 'src/mayr_listener.dart';

@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'package:mayr_events/mayr_events.dart';
 
@@ -242,7 +244,7 @@ void main() async {
     }
   });
 
-  print('\n' + '=' * 50);
+  print('\n${'=' * 50}');
   print('📊 Test Results:');
   print('   ✅ Passed: $passed');
   if (failed > 0) {
