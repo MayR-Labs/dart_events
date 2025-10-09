@@ -1,3 +1,25 @@
 ## 0.0.1
 
 - Initial release
+- ✅ Core event system implementation
+  - `MayrEvent` - Base class for events
+  - `MayrListener` - Base class for event listeners
+  - `MayrEvents` - Singleton event bus for firing and managing events
+  - `MayrEventSetup` - Application-level configuration
+- ✅ Key features
+  - Async event handling
+  - Multiple listeners per event
+  - Once-only listeners
+  - Isolate support for CPU-intensive listeners
+  - Global hooks (beforeHandle, onError)
+  - Type-safe event/listener binding
+- ✅ Comprehensive test suite (350+ lines, 12+ test scenarios)
+- ✅ Full documentation
+  - Extensive dartdoc comments on all public APIs
+  - README with usage examples
+  - API.md with complete API reference
+  - TESTING.md with testing guidelines
+  - CONTRIBUTING.md with contribution guidelines
+  - DESIGN.md with architecture details
+- ✅ Working example Flutter application
+- ✅ MIT License
