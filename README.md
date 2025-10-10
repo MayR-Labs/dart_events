@@ -48,6 +48,8 @@ Then import:
 import 'package:mayr_events/mayr_events.dart';
 ```
 
+> 💡 **New to mayr_events?** Check out the [Quick Start Guide](QUICKSTART.md) for a 5-minute tutorial!
+
 ---
 
 ## ⚙️ Setup
@@ -195,6 +197,17 @@ Please make sure to:
 - Update documentation if necessary.
 
 > Let's build something amazing together!
+
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### 📚 Additional Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute tutorial to get started
+- **[API.md](API.md)** - Complete API reference and best practices
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Detailed guidelines for contributors
+- **[TESTING.md](TESTING.md)** - Information about running and writing tests
+- **[DESIGN.md](DESIGN.md)** - Architecture and design decisions
+- **[example/](example/)** - Working Flutter example application
 
 ---
 
