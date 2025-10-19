@@ -8,13 +8,13 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  mayr_events: ^1.0.0
+  mayr_events: ^2.0.0
 ```
 
 Then run:
 
 ```bash
-flutter pub get
+dart pub get
 ```
 
 ## 5-Minute Tutorial
@@ -56,33 +56,27 @@ class SendWelcomeEmailListener extends MayrListener<UserRegisteredEvent> {
 }
 ```
 
-### Step 3: Set Up the Event System
+### Step 3: Set Up Events
 
-Create `config/app_events.dart`:
+Create `config/events_setup.dart`:
 
 ```dart
 import 'package:mayr_events/mayr_events.dart';
 import '../events/user_events.dart';
 import '../listeners/welcome_email_listener.dart';
 
-class AppEvents extends MayrEvents {
-  @override
-  void registerListeners() {
-    // Register all your listeners here
-    on<UserRegisteredEvent>(SendWelcomeEmailListener());
-  }
+void setupEvents() {
+  // Register listeners
+  MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
   
-  @override
-  Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {
-    // Optional: Log before each listener executes
+  // Add global hooks (optional)
+  MayrEvents.beforeHandle('logger', (event, listener) async {
     print('[Event] ${event.runtimeType} → ${listener.runtimeType}');
-  }
+  });
   
-  @override
-  Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {
-    // Optional: Handle errors globally
+  MayrEvents.onError('error_logger', (event, error, stack) async {
     print('[Error] ${event.runtimeType}: $error');
-  }
+  });
 }
 ```
 
@@ -91,235 +85,108 @@ class AppEvents extends MayrEvents {
 Update your `main.dart`:
 
 ```dart
-import 'package:flutter/material.dart';
-import 'config/app_events.dart';
+import 'config/events_setup.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  
   // Initialize the event system
-  AppEvents();
+  setupEvents();
   
   runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mayr Events Demo',
-      home: HomeScreen(),
-    );
-  }
 }
 ```
 
 ### Step 5: Fire Events
 
-In any screen or widget:
+Anywhere in your app:
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:mayr_events/mayr_events.dart';
-import '../events/user_events.dart';
+import 'events/user_events.dart';
 
-class RegisterScreen extends StatelessWidget {
-  Future<void> _registerUser(String email) async {
-    // Your registration logic here
-    final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
-    
-    // Fire the event - simple!
-    await MayrEvents.fire(
-      UserRegisteredEvent(userId, email),
-    );
-    
-    print('User registered and event fired!');
-  }
+Future<void> registerUser(String email) async {
+  final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
   
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: () => _registerUser('user@example.com'),
-      child: Text('Register User'),
-    );
-  }
+  // Fire the event
+  await MayrEvents.fire(
+    UserRegisteredEvent(userId, email),
+  );
+  
+  print('User registered and event fired!');
 }
 ```
 
-## That's It!
+## Advanced Features
 
-You now have a working event system! When a user registers:
-1. The `UserRegisteredEvent` is fired
-2. All registered listeners (like `SendWelcomeEmailListener`) execute
-3. Each listener can perform its task independently
+### Event-Level Hooks
+
+Events can define their own hooks:
+
+```dart
+class UserRegisteredEvent extends MayrEvent {
+  final String userId;
+  final String email;
+  
+  const UserRegisteredEvent(this.userId, this.email);
+  
+  @override
+  Future<void> Function(MayrEvent, MayrListener)? get beforeHandle =>
+      (event, listener) async {
+        print('About to handle user registration');
+      };
+}
+```
+
+### Keyed Handlers
+
+Manage handlers with unique keys:
+
+```dart
+// Add multiple handlers
+MayrEvents.beforeHandle('logger', logCallback);
+MayrEvents.beforeHandle('metrics', metricsCallback);
+
+// Remove specific handler
+MayrEvents.removeBeforeHandler('logger');
+```
+
+### ShouldHandle Validation
+
+Control when listeners execute:
+
+```dart
+MayrEvents.shouldHandle('validator', (event) {
+  // Return false to skip listener execution
+  if (event is UserRegisteredEvent) {
+    return event.userId.isNotEmpty;
+  }
+  return true;
+});
+```
+
+### Once-Only Listeners
+
+Listeners that run only once:
+
+```dart
+class FirstTimeSetupListener extends MayrListener<AppLaunchedEvent> {
+  @override
+  bool get once => true;
+
+  @override
+  Future<void> handle(AppLaunchedEvent event) async {
+    print('This runs only once');
+  }
+}
+```
 
 ## What's Next?
 
-### Add More Listeners
+- Check out the [README](README.md) for complete API documentation
+- Review the [example app](example/) for a working implementation
+- See [MIGRATION.md](MIGRATION.md) if upgrading from v1.x
 
-You can have multiple listeners for the same event:
+## Need Help?
 
-```dart
-class TrackAnalyticsListener extends MayrListener<UserRegisteredEvent> {
-  @override
-  Future<void> handle(UserRegisteredEvent event) async {
-    // Track user registration in analytics
-    await Analytics.track('user_registered', {
-      'user_id': event.userId,
-    });
-  }
-}
-
-// Register it
-@override
-void registerListeners() {
-  MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-  MayrEvents.on<UserRegisteredEvent>(TrackAnalyticsListener());
-}
-```
-
-### Use Once-Only Listeners
-
-For listeners that should only run once:
-
-```dart
-class ShowWelcomeTutorialListener extends MayrListener<AppLaunchedEvent> {
-  @override
-  bool get once => true;  // Only runs once
-  
-  @override
-  Future<void> handle(AppLaunchedEvent event) async {
-    // Show welcome tutorial
-  }
-}
-```
-
-### Run in Isolate for Heavy Work
-
-For CPU-intensive tasks:
-
-```dart
-class ProcessDataListener extends MayrListener<DataReceivedEvent> {
-  @override
-  bool get runInIsolate => true;  // Runs in separate isolate
-  
-  @override
-  Future<void> handle(DataReceivedEvent event) async {
-    // Heavy computation that won't block UI
-  }
-}
-```
-
-## Common Patterns
-
-### Order Processing
-
-```dart
-// Event
-class OrderPlacedEvent extends MayrEvent {
-  final String orderId;
-  final double total;
-  const OrderPlacedEvent(this.orderId, this.total);
-}
-
-// Listeners
-class ProcessPaymentListener extends MayrListener<OrderPlacedEvent> {
-  Future<void> handle(OrderPlacedEvent event) async {
-    await PaymentService.process(event.orderId);
-  }
-}
-
-class SendOrderConfirmationListener extends MayrListener<OrderPlacedEvent> {
-  Future<void> handle(OrderPlacedEvent event) async {
-    await EmailService.sendOrderConfirmation(event.orderId);
-  }
-}
-
-class UpdateInventoryListener extends MayrListener<OrderPlacedEvent> {
-  Future<void> handle(OrderPlacedEvent event) async {
-    await InventoryService.updateStock(event.orderId);
-  }
-}
-```
-
-### User Authentication
-
-```dart
-// Events
-class UserLoggedInEvent extends MayrEvent {
-  final String userId;
-  const UserLoggedInEvent(this.userId);
-}
-
-class UserLoggedOutEvent extends MayrEvent {
-  final String userId;
-  const UserLoggedOutEvent(this.userId);
-}
-
-// Listeners
-class TrackLoginListener extends MayrListener<UserLoggedInEvent> {
-  Future<void> handle(UserLoggedInEvent event) async {
-    await Analytics.track('login', {'user_id': event.userId});
-  }
-}
-
-class ClearCacheListener extends MayrListener<UserLoggedOutEvent> {
-  Future<void> handle(UserLoggedOutEvent event) async {
-    await CacheService.clear();
-  }
-}
-```
-
-## Tips
-
-1. **Organize your code:**
-   ```
-   lib/
-   ├── events/
-   │   ├── user_events.dart
-   │   ├── order_events.dart
-   │   └── app_events.dart
-   ├── listeners/
-   │   ├── user/
-   │   │   ├── send_welcome_email_listener.dart
-   │   │   └── track_analytics_listener.dart
-   │   └── order/
-   │       ├── process_payment_listener.dart
-   │       └── send_confirmation_listener.dart
-   └── config/
-       └── app_events.dart
-   ```
-
-2. **Test your listeners individually:**
-   ```dart
-   test('SendWelcomeEmailListener sends email', () async {
-     final listener = SendWelcomeEmailListener();
-     await listener.handle(UserRegisteredEvent('123', 'test@example.com'));
-     
-     // Verify email was sent
-   });
-   ```
-
-3. **Use descriptive event names:**
-   - Good: `UserRegisteredEvent`, `OrderPlacedEvent`, `PaymentCompletedEvent`
-   - Avoid: `UserEvent`, `OrderEvent`, `PaymentEvent`
-
-4. **Keep listeners focused:**
-   - Each listener should do one thing well
-   - Use multiple listeners instead of one that does everything
-
-## Getting Help
-
-- 📖 [Full API Documentation](API.md)
-- 🧪 [Testing Guide](TESTING.md)
-- 🤝 [Contributing Guide](CONTRIBUTING.md)
-- 💡 [Design Document](DESIGN.md)
-- 📱 [Example App](example/)
-
-## Next Steps
-
-1. Check out the [example app](example/) for a complete working implementation
-2. Read the [API documentation](API.md) for all available features
-3. Join the community and contribute!
-
-Happy coding! 🚀
+- 📚 [Full Documentation](README.md)
+- 🐛 [Report Issues](https://github.com/MayR-Labs/dart_events/issues)
+- 💬 [Discussions](https://github.com/MayR-Labs/dart_events/discussions)

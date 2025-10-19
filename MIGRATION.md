@@ -1,14 +1,14 @@
 # Migration Guide: v1.x to v2.0
 
-This guide helps you migrate from the old `MayrEventSetup` pattern to the new simplified `MayrEvents` pattern.
+This guide helps you migrate to the new functional API in v2.0.
 
 ## What Changed?
 
-The new pattern eliminates boilerplate and uses a global singleton:
+The v2.0 release completely redesigns the API to use a functional approach without requiring class extension.
 
 **Old Pattern (v1.x):**
 ```dart
-// 1. Create setup class
+// Had to extend a class
 class MyEvents extends MayrEventSetup {
   @override
   void registerListeners() {
@@ -16,39 +16,41 @@ class MyEvents extends MayrEventSetup {
   }
 }
 
-// 2. Initialize in main()
+// Had to call init
 void main() async {
   await MyEvents().init();
   runApp(MyApp());
 }
 
-// 3. Fire events
+// Fire events
 await MayrEvents.instance.fire(UserEvent());
 ```
 
 **New Pattern (v2.0):**
 ```dart
-// 1. Create events class (simpler - no singleton boilerplate!)
-class MyEvents extends MayrEvents {
-  @override
-  void registerListeners() {
-    on<UserEvent>(UserListener());
-  }
+// Just a function - no class extension needed!
+void setupEvents() {
+  MayrEvents.on<UserEvent>(UserListener());
+  
+  // Can add keyed handlers
+  MayrEvents.beforeHandle('logger', (event, listener) async {
+    print('Handling ${event.runtimeType}');
+  });
 }
 
-// 2. Initialize once in main()
-void main() async {
-  MyEvents(); // That's it!
+// Call setup function
+void main() {
+  setupEvents();
   runApp(MyApp());
 }
 
-// 3. Fire events - uses base class static method
+// Fire events - simpler!
 await MayrEvents.fire(UserEvent());
 ```
 
 ## Migration Steps
 
-### Step 1: Update Your Events Class
+### Step 1: Replace Class with Function
 
 **Before:**
 ```dart
@@ -57,25 +59,31 @@ class AppEvents extends MayrEventSetup {
   void registerListeners() {
     MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
   }
+  
+  @override
+  Future<void> beforeHandle(event, listener) async {
+    print('Handling event');
+  }
 }
 ```
 
 **After:**
 ```dart
-class AppEvents extends MayrEvents {
-  @override
-  void registerListeners() {
-    on<UserRegisteredEvent>(SendWelcomeEmailListener());  // No MayrEvents. prefix
-  }
+void setupEvents() {
+  MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
+  
+  // Convert hooks to keyed handlers
+  MayrEvents.beforeHandle('app_logger', (event, listener) async {
+    print('Handling event');
+  });
 }
 ```
 
-### Step 2: Update main() to Create Instance
+### Step 2: Update Initialization
 
 **Before:**
 ```dart
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
   await AppEvents().init();
   runApp(MyApp());
 }
@@ -83,9 +91,8 @@ void main() async {
 
 **After:**
 ```dart
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  AppEvents(); // Just create the instance
+void main() {
+  setupEvents();
   runApp(MyApp());
 }
 ```
@@ -95,8 +102,6 @@ void main() async {
 **Before:**
 ```dart
 await MayrEvents.instance.fire(UserRegisteredEvent(userId, email));
-// OR
-await AppEvents.fire(UserRegisteredEvent(userId, email)); // if you had static method
 ```
 
 **After:**
@@ -104,61 +109,129 @@ await AppEvents.fire(UserRegisteredEvent(userId, email)); // if you had static m
 await MayrEvents.fire(UserRegisteredEvent(userId, email));
 ```
 
-### Step 4: Update Listener Registration (in registerListeners)
+### Step 4: Convert Hooks to Keyed Handlers
 
-**Before:**
+**Before (class-level hooks):**
 ```dart
-@override
-void registerListeners() {
-  MayrEvents.on<UserEvent>(UserListener());
+class AppEvents extends MayrEventSetup {
+  @override
+  Future<void> beforeHandle(event, listener) async {
+    // Hook logic
+  }
+  
+  @override
+  Future<void> onError(event, error, stack) async {
+    // Error handling
+  }
 }
 ```
 
-**After:**
+**After (keyed handlers):**
 ```dart
-@override
-void registerListeners() {
-  on<UserEvent>(UserListener());  // Just 'on', not 'MayrEvents.on'
+void setupEvents() {
+  MayrEvents.beforeHandle('logger', (event, listener) async {
+    // Hook logic
+  });
+  
+  MayrEvents.onError('error_handler', (event, error, stack) async {
+    // Error handling
+  });
+  
+  // NEW: shouldHandle validator
+  MayrEvents.shouldHandle('validator', (event) {
+    // Return false to prevent execution
+    return true;
+  });
 }
 ```
 
-### Step 5: Remove Singleton Boilerplate
+## New Features in v2.0
 
-If you had this in your events class, remove it:
+### 1. Event-Level Hooks
+
+Events can now have their own hooks:
 
 ```dart
-// DELETE THESE LINES:
-static final AppEvents instance = AppEvents._();
-AppEvents._();
-
-static Future<void> fire<T extends MayrEvent>(T event) async {
-  await instance._fire(event);
+class UserRegisteredEvent extends MayrEvent {
+  final String userId;
+  final String email;
+  
+  const UserRegisteredEvent(this.userId, this.email);
+  
+  @override
+  Future<void> Function(MayrEvent, MayrListener)? get beforeHandle =>
+      (event, listener) async {
+        print('Event-specific hook');
+      };
+  
+  @override
+  bool Function(MayrEvent)? get shouldHandle =>
+      (event) => (event as UserRegisteredEvent).userId.isNotEmpty;
+  
+  @override
+  Future<void> Function(MayrEvent, Object, StackTrace)? get onError =>
+      (event, error, stack) async {
+        print('Event-specific error handler');
+      };
 }
 ```
 
-Your class should only have:
-- `registerListeners()` method
-- `beforeHandle()` method (optional)
-- `onError()` method (optional)
+### 2. Keyed Handler System
+
+Manage handlers with unique keys:
+
+```dart
+// Add handlers
+MayrEvents.beforeHandle('logger', logCallback);
+MayrEvents.beforeHandle('metrics', metricsCallback);
+MayrEvents.onError('sentry', sentryCallback);
+
+// Remove specific handlers
+MayrEvents.removeBeforeHandler('logger');
+MayrEvents.removeErrorHandler('sentry');
+```
+
+### 3. ShouldHandle Callbacks
+
+New validation system:
+
+```dart
+MayrEvents.shouldHandle('rate_limiter', (event) {
+  // Return false to skip listener execution
+  return !isRateLimited();
+});
+```
+
+### 4. Handler Removal
+
+Clean up specific handlers:
+
+```dart
+MayrEvents.removeBeforeHandler('key');
+MayrEvents.removeErrorHandler('key');
+MayrEvents.removeShouldHandle('key');
+```
+
+## Breaking Changes
+
+1. **MayrEventSetup removed** - No longer exists
+2. **No class extension** - Use functional approach
+3. **MayrEvents.instance removed** - Use static methods directly
+4. **Init method removed** - Just call setup function
+5. **Pure Dart** - No Flutter dependency
 
 ## Key Benefits
 
-1. **Less Boilerplate**: No singleton pattern or static fire method needed
-2. **Simpler API**: `MayrEvents.fire()` works everywhere
-3. **Global Singleton**: One instance serves the entire app
-4. **Clearer Pattern**: Just extend, override methods, and fire
-
-## Important Notes
-
-- **MayrEventSetup is deleted** in v2.0 (not just deprecated)
-- All event firing now uses `MayrEvents.fire()` static method
-- The system uses a global singleton internally
-- Now a pure Dart package (no Flutter dependency)
+1. **Simpler** - No class boilerplate
+2. **More flexible** - Event-level hooks
+3. **Better control** - Keyed handler system
+4. **Cleaner** - Functional approach
+5. **Universal** - Pure Dart works everywhere
 
 ## Need Help?
 
-If you encounter issues during migration, please:
+If you encounter issues during migration:
 1. Check the [README](README.md) for the latest examples
 2. Review the [Quick Start Guide](QUICKSTART.md)
 3. Look at the updated [example app](example/)
-4. Open an issue on GitHub if you need assistance
+4. Open an issue on [GitHub](https://github.com/MayR-Labs/dart_events/issues)
