@@ -541,6 +541,130 @@ class MyAppEvents extends MayrEventSetup {
 
 ---
 
+## Queue System
+
+### QueueConfig
+
+Configuration for the queue system.
+
+```dart
+class QueueConfig {
+  final String fallbackQueue;
+  final List<String> queues;
+  final Duration defaultTimeout;
+  
+  const QueueConfig({
+    required this.fallbackQueue,
+    required this.queues,
+    this.defaultTimeout = const Duration(seconds: 60),
+  });
+}
+```
+
+### Setup Queues
+
+```dart
+void setupEvents() {
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications', 'orders', 'payments'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+}
+```
+
+### Queued Listener Properties
+
+Add these properties to your listener to enable queuing:
+
+```dart
+class ProcessOrderListener extends MayrListener<OrderPlacedEvent> {
+  @override
+  bool get queued => true;  // Enable queuing
+  
+  @override
+  String get queue => 'orders';  // Target queue name
+  
+  @override
+  Duration get timeout => Duration(seconds: 60);  // Job timeout
+  
+  @override
+  int get retries => 5;  // Max retries (capped at 30)
+  
+  @override
+  Future<void> handle(OrderPlacedEvent event) async {
+    // Process order in background
+  }
+}
+```
+
+### Queue Features
+
+- **Multiple Queues**: Organize jobs by type (emails, notifications, etc.)
+- **Fallback Queue**: Undefined queue names use the fallback
+- **Automatic Retry**: Jobs retry on failure up to configured limit
+- **Timeout Protection**: Jobs timeout if they take too long
+- **Auto Cleanup**: Queue workers are destroyed when empty
+- **Mixed Mode**: Use both queued and non-queued listeners
+
+### Queue Example
+
+```dart
+void setupEvents() {
+  // Setup queue system
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications'],
+  );
+  
+  // Mix queued and non-queued listeners
+  MayrEvents.on<OrderPlacedEvent>(LogOrderListener());        // Runs immediately
+  MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());    // Queued
+  MayrEvents.on<OrderPlacedEvent>(SendEmailListener());       // Queued
+}
+
+// Non-queued - runs immediately
+class LogOrderListener extends MayrListener<OrderPlacedEvent> {
+  @override
+  Future<void> handle(OrderPlacedEvent event) async {
+    print('Order ${event.orderId} received');
+  }
+}
+
+// Queued - runs in background
+class ProcessOrderListener extends MayrListener<OrderPlacedEvent> {
+  @override
+  bool get queued => true;
+  
+  @override
+  String get queue => 'orders';
+  
+  @override
+  int get retries => 5;
+  
+  @override
+  Future<void> handle(OrderPlacedEvent event) async {
+    await processOrder(event);
+  }
+}
+
+// Queued with different queue
+class SendEmailListener extends MayrListener<OrderPlacedEvent> {
+  @override
+  bool get queued => true;
+  
+  @override
+  String get queue => 'emails';
+  
+  @override
+  Future<void> handle(OrderPlacedEvent event) async {
+    await sendConfirmationEmail(event);
+  }
+}
+```
+
+---
+
 ## Complete Example
 
 See [example/lib/main.dart](example/lib/main.dart) for a complete, working Flutter application demonstrating all features.
