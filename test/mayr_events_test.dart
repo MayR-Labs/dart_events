@@ -77,6 +77,38 @@ class AnalyticsListener extends MayrListener<OrderPlacedEvent> {
 }
 
 // Test setup
+class TestEvents extends MayrEvents {
+  static final TestEvents instance = TestEvents._();
+  TestEvents._();
+
+  final List<String> beforeHandleLogs = [];
+  final List<String> errorLogs = [];
+
+  final WelcomeEmailListener welcomeListener = WelcomeEmailListener();
+  final AnalyticsListener analyticsListener = AnalyticsListener();
+
+  @override
+  void registerListeners() {
+    on<UserRegisteredEvent>(welcomeListener);
+    on<OrderPlacedEvent>(analyticsListener);
+  }
+
+  @override
+  Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {
+    beforeHandleLogs.add('${listener.runtimeType}->${event.runtimeType}');
+  }
+
+  @override
+  Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {
+    errorLogs.add('${event.runtimeType}:$error');
+  }
+
+  static Future<void> fire<T extends MayrEvent>(T event) async {
+    await instance._fire(event);
+  }
+}
+
+// Keep the old setup for backward compatibility tests
 class TestEventSetup extends MayrEventSetup {
   final List<String> beforeHandleLogs = [];
   final List<String> errorLogs = [];
@@ -104,7 +136,7 @@ class TestEventSetup extends MayrEventSetup {
 void main() {
   // Reset the event bus before each test
   setUp(() {
-    MayrEvents.instance.clear();
+    TestEvents.instance.clear();
   });
 
   group('MayrEvent', () {
@@ -139,15 +171,11 @@ void main() {
   });
 
   group('MayrEvents', () {
-    test('is a singleton', () {
-      expect(MayrEvents.instance, same(MayrEvents.instance));
-    });
-
     test('can register and fire events', () async {
       final listener = TestListener();
-      MayrEvents.instance.listen<TestEvent>(listener);
+      TestEvents.instance.on<TestEvent>(listener);
 
-      await MayrEvents.instance.fire(const TestEvent('hello'));
+      await TestEvents.fire(const TestEvent('hello'));
 
       expect(listener.messages, ['hello']);
     });
@@ -156,10 +184,10 @@ void main() {
       final listener1 = TestListener();
       final listener2 = TestListener();
 
-      MayrEvents.instance.listen<TestEvent>(listener1);
-      MayrEvents.instance.listen<TestEvent>(listener2);
+      TestEvents.instance.on<TestEvent>(listener1);
+      TestEvents.instance.on<TestEvent>(listener2);
 
-      await MayrEvents.instance.fire(const TestEvent('broadcast'));
+      await TestEvents.fire(const TestEvent('broadcast'));
 
       expect(listener1.messages, ['broadcast']);
       expect(listener2.messages, ['broadcast']);

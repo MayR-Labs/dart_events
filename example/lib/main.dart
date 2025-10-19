@@ -84,19 +84,22 @@ class TrackAppLaunchListener extends MayrListener<AppLaunchedEvent> {
 // ============================================================================
 
 /// Central event configuration for the app
-class MyAppEvents extends MayrEventSetup {
+class MyAppEvents extends MayrEvents {
+  static final MyAppEvents instance = MyAppEvents._();
+  MyAppEvents._();
+
   @override
   void registerListeners() {
     // User registration events
-    MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-    MayrEvents.on<UserRegisteredEvent>(UserAnalyticsListener());
+    on<UserRegisteredEvent>(SendWelcomeEmailListener());
+    on<UserRegisteredEvent>(UserAnalyticsListener());
 
     // Order events
-    MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());
-    MayrEvents.on<OrderPlacedEvent>(OrderConfirmationListener());
+    on<OrderPlacedEvent>(ProcessOrderListener());
+    on<OrderPlacedEvent>(OrderConfirmationListener());
 
     // App lifecycle events
-    MayrEvents.on<AppLaunchedEvent>(TrackAppLaunchListener());
+    on<AppLaunchedEvent>(TrackAppLaunchListener());
   }
 
   @override
@@ -113,6 +116,11 @@ class MyAppEvents extends MayrEventSetup {
     // Handle errors from listeners
     print('[ERROR] ${event.runtimeType} failed: $error');
   }
+
+  // Static fire method for easy access
+  static Future<void> fire<T extends MayrEvent>(T event) async {
+    await instance._fire(event);
+  }
 }
 
 // ============================================================================
@@ -122,11 +130,8 @@ class MyAppEvents extends MayrEventSetup {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize event system
-  await MyAppEvents().init();
-
-  // Fire app launched event
-  await MayrEvents.instance.fire(const AppLaunchedEvent());
+  // Fire app launched event - no init() call needed!
+  await MyAppEvents.fire(const AppLaunchedEvent());
 
   runApp(const MyApp());
 }
@@ -164,7 +169,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing UserRegisteredEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(UserRegisteredEvent(userId, email));
+    await MyAppEvents.fire(UserRegisteredEvent(userId, email));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -185,7 +190,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing OrderPlacedEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(OrderPlacedEvent(orderId, total));
+    await MyAppEvents.fire(OrderPlacedEvent(orderId, total));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +207,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing AppLaunchedEvent (again)');
     print('========================================');
 
-    await MayrEvents.instance.fire(const AppLaunchedEvent());
+    await MyAppEvents.fire(const AppLaunchedEvent());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
