@@ -2,39 +2,41 @@ import 'mayr_event.dart';
 import 'mayr_events.dart';
 import 'mayr_listener.dart';
 
-/// Base class for application-level event setup and configuration.
+/// DEPRECATED: Use the new [MayrEvents] pattern instead.
 ///
-/// This is the entry point for configuring your event system.
-/// Extend this class to register all your listeners and define
-/// global hooks for your application.
+/// This class is deprecated and will be removed in a future version.
+/// Instead of extending [MayrEventSetup], extend [MayrEvents] directly.
 ///
-/// ## Example
-///
+/// Old pattern:
 /// ```dart
-/// class MyAppEvents extends MayrEventSetup {
+/// class MyEvents extends MayrEventSetup {
 ///   @override
 ///   void registerListeners() {
-///     MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-///     MayrEvents.on<OrderPlacedEvent>(OrderAnalyticsListener());
-///   }
-///
-///   @override
-///   Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {
-///     print('[Before] ${listener.runtimeType} handling ${event.runtimeType}');
-///   }
-///
-///   @override
-///   Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {
-///     print('[Error] ${event.runtimeType}: $error');
+///     MayrEvents.on<UserEvent>(UserListener());
 ///   }
 /// }
-///
-/// // In your main()
-/// void main() async {
-///   await MyAppEvents().init();
-///   runApp(MyApp());
-/// }
+/// await MyEvents().init();
+/// await MayrEvents.instance.fire(UserEvent());
 /// ```
+///
+/// New pattern:
+/// ```dart
+/// class MyEvents extends MayrEvents {
+///   static final MyEvents instance = MyEvents._();
+///   MyEvents._();
+///
+///   @override
+///   void registerListeners() {
+///     on<UserEvent>(UserListener());
+///   }
+///
+///   static Future<void> fire<T extends MayrEvent>(T event) async {
+///     await instance._fire(event);
+///   }
+/// }
+/// await MyEvents.fire(UserEvent());
+/// ```
+@deprecated
 abstract class MayrEventSetup {
   /// Creates a new [MayrEventSetup].
   const MayrEventSetup();
@@ -43,73 +45,21 @@ abstract class MayrEventSetup {
   ///
   /// This is where you should register all your listeners.
   /// This method is called during [init].
-  ///
-  /// ```dart
-  /// @override
-  /// void registerListeners() {
-  ///   MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-  ///   MayrEvents.on<OrderPlacedEvent>(OrderAnalyticsListener());
-  /// }
-  /// ```
   void registerListeners();
 
   /// Hook that runs before every listener handles an event.
-  ///
-  /// This is useful for:
-  /// - Logging which events are being processed
-  /// - Measuring performance
-  /// - Implementing middleware-like behavior
-  ///
-  /// The default implementation does nothing.
-  ///
-  /// ```dart
-  /// @override
-  /// Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {
-  ///   print('[${DateTime.now()}] ${listener.runtimeType} handling ${event.runtimeType}');
-  /// }
-  /// ```
   Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {}
 
   /// Global error handler for listener failures.
-  ///
-  /// This is called when a listener throws an exception.
-  /// Use this to:
-  /// - Log errors
-  /// - Send error reports
-  /// - Implement fallback behavior
-  ///
-  /// The default implementation does nothing.
-  ///
-  /// ```dart
-  /// @override
-  /// Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {
-  ///   print('[Error] ${event.runtimeType}: $error');
-  ///   await ErrorReporter.report(error, stack);
-  /// }
-  /// ```
   Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {}
 
   /// Initializes the event system.
   ///
-  /// Call this method in your `main()` function before running your app.
-  /// It will:
-  /// 1. Register all listeners via [registerListeners]
-  /// 2. Set up global hooks ([beforeHandle], [onError])
-  ///
-  /// ```dart
-  /// void main() async {
-  ///   await MyAppEvents().init();
-  ///   runApp(MyApp());
-  /// }
-  /// ```
+  /// DEPRECATED: This method is no longer supported with the new pattern.
+  @deprecated
   Future<void> init() async {
-    final events = MayrEvents.instance;
-
-    // Register all listeners
-    registerListeners();
-
-    // Set up global hooks
-    events.beforeHandle = beforeHandle;
-    events.onError = onError;
+    throw UnsupportedError(
+      'MayrEventSetup is deprecated. Please use the new MayrEvents pattern.',
+    );
   }
 }
