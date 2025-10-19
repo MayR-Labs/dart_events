@@ -54,14 +54,18 @@ import 'package:mayr_events/mayr_events.dart';
 
 ## ⚙️ Setup
 
-Start by creating an **Event Setup** class that defines your listeners.
+Create your events class by extending `MayrEvents`:
 
 ```dart
-class MyAppEvents extends MayrEventSetup {
+class MyAppEvents extends MayrEvents {
+  // Singleton pattern
+  static final MyAppEvents instance = MyAppEvents._();
+  MyAppEvents._();
+
   @override
   void registerListeners() {
-    MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-    MayrEvents.on<OrderPlacedEvent>(OrderAnalyticsListener());
+    on<UserRegisteredEvent>(SendWelcomeEmailListener());
+    on<OrderPlacedEvent>(OrderAnalyticsListener());
   }
 
   @override
@@ -73,17 +77,15 @@ class MyAppEvents extends MayrEventSetup {
   Future<void> onError(event, error, stack) async {
     print('[Error] ${event.runtimeType}: $error');
   }
+
+  // Static fire method for easy access
+  static Future<void> fire<T extends MayrEvent>(T event) async {
+    await instance._fire(event);
+  }
 }
 ```
 
-Call `init()` in your `main()` (preferably before running your app):
-
-```dart
-void main() async {
-  await MyAppEvents().init();
-  runApp(MyApp());
-}
-```
+That's it! No manual `init()` call needed — the system auto-initializes on first use.
 
 ---
 
@@ -145,7 +147,7 @@ class TrackAppLaunchListener extends MayrListener<AppLaunchedEvent> {
 Anywhere in your app:
 
 ```dart
-MayrEvents.fire(UserRegisteredEvent('U123'));
+MyAppEvents.fire(UserRegisteredEvent('U123'));
 ```
 
 All matching listeners will automatically run (some even in isolates).
@@ -170,9 +172,8 @@ class OrderAnalyticsListener extends MayrListener<OrderPlacedEvent> {
 }
 
 void main() async {
-  await MyAppEvents().init();
-
-  MayrEvents.fire(OrderPlacedEvent('ORD_908', 1200));
+  // No init() call needed!
+  MyAppEvents.fire(OrderPlacedEvent('ORD_908', 1200));
 }
 ```
 
