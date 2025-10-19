@@ -13,7 +13,7 @@ import 'mayr_listener.dart';
 ///
 /// ```dart
 /// // Register a listener
-/// MayrEvents.instance.listen<UserRegisteredEvent>(
+/// MayrEvents.listen<UserRegisteredEvent>(
 ///   SendWelcomeEmailListener(),
 /// );
 ///
@@ -49,21 +49,26 @@ class MayrEvents {
   /// The listener will be called whenever an event of type [T] is fired.
   ///
   /// ```dart
-  /// MayrEvents.instance.listen<UserRegisteredEvent>(
+  /// MayrEvents.listen<UserRegisteredEvent>(
   ///   SendWelcomeEmailListener(),
   /// );
   /// ```
-  void listen<T extends MayrEvent>(MayrListener<T> listener) {
+  static void listen<T extends MayrEvent>(MayrListener<T> listener) {
+    instance._listen<T>(listener);
+  }
+
+  /// Internal method to register a listener.
+  void _listen<T extends MayrEvent>(MayrListener<T> listener) {
     _listeners.putIfAbsent(T, () => []).add(listener);
   }
 
-  /// Shorthand for [instance.listen].
+  /// Shorthand for [listen].
   ///
   /// ```dart
   /// MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
   /// ```
   static void on<T extends MayrEvent>(MayrListener<T> listener) {
-    instance.listen<T>(listener);
+    listen<T>(listener);
   }
 
   /// Fires an event to all registered listeners.
@@ -78,7 +83,12 @@ class MayrEvents {
   /// ```dart
   /// await MayrEvents.fire(UserRegisteredEvent('user123', 'user@example.com'));
   /// ```
-  Future<void> fire<T extends MayrEvent>(T event) async {
+  static Future<void> fire<T extends MayrEvent>(T event) async {
+    await instance._fire<T>(event);
+  }
+
+  /// Internal method to fire an event.
+  Future<void> _fire<T extends MayrEvent>(T event) async {
     final listeners = _listeners[T] ?? [];
 
     // Create a copy to avoid concurrent modification issues
@@ -116,46 +126,71 @@ class MayrEvents {
   /// MayrEvents.on<UserRegisteredEvent>(listener);
   ///
   /// // Later...
-  /// MayrEvents.instance.remove<UserRegisteredEvent>(listener);
+  /// MayrEvents.remove<UserRegisteredEvent>(listener);
   /// ```
-  void remove<T extends MayrEvent>(MayrListener<T> listener) {
+  static void remove<T extends MayrEvent>(MayrListener<T> listener) {
+    instance._remove<T>(listener);
+  }
+
+  /// Internal method to remove a specific listener.
+  void _remove<T extends MayrEvent>(MayrListener<T> listener) {
     _listeners[T]?.remove(listener);
   }
 
   /// Removes all listeners for a specific event type.
   ///
   /// ```dart
-  /// MayrEvents.instance.removeAll<UserRegisteredEvent>();
+  /// MayrEvents.removeAll<UserRegisteredEvent>();
   /// ```
-  void removeAll<T extends MayrEvent>() {
+  static void removeAll<T extends MayrEvent>() {
+    instance._removeAll<T>();
+  }
+
+  /// Internal method to remove all listeners for a specific event type.
+  void _removeAll<T extends MayrEvent>() {
     _listeners.remove(T);
   }
 
   /// Clears all registered listeners.
   ///
   /// This is useful for testing or resetting the event bus.
-  void clear() {
+  static void clear() {
+    instance._clear();
+  }
+
+  /// Internal method to clear all listeners.
+  void _clear() {
     _listeners.clear();
   }
 
   /// Returns the number of listeners registered for an event type.
   ///
   /// ```dart
-  /// final count = MayrEvents.instance.listenerCount<UserRegisteredEvent>();
+  /// final count = MayrEvents.listenerCount<UserRegisteredEvent>();
   /// print('$count listeners registered');
   /// ```
-  int listenerCount<T extends MayrEvent>() {
+  static int listenerCount<T extends MayrEvent>() {
+    return instance._listenerCount<T>();
+  }
+
+  /// Internal method to get the listener count.
+  int _listenerCount<T extends MayrEvent>() {
     return _listeners[T]?.length ?? 0;
   }
 
   /// Returns whether any listeners are registered for an event type.
   ///
   /// ```dart
-  /// if (MayrEvents.instance.hasListeners<UserRegisteredEvent>()) {
+  /// if (MayrEvents.hasListeners<UserRegisteredEvent>()) {
   ///   print('Listeners registered');
   /// }
   /// ```
-  bool hasListeners<T extends MayrEvent>() {
+  static bool hasListeners<T extends MayrEvent>() {
+    return instance._hasListeners<T>();
+  }
+
+  /// Internal method to check if listeners exist.
+  bool _hasListeners<T extends MayrEvent>() {
     return (_listeners[T]?.isNotEmpty ?? false);
   }
 }

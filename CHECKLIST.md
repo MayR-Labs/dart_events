@@ -136,7 +136,7 @@ Comprehensive checklist for verifying the mayr_events package is production-read
 
 ### Analysis
 - [x] No analysis warnings
-- [x] Follows Flutter lints
+- [x] Follows Dart lints
 - [x] Type safety maintained
 - [x] Proper nullability
 
@@ -270,7 +270,7 @@ To verify everything is working:
 
 ```bash
 # 1. Install dependencies
-flutter pub get
+dart pub get
 
 # 2. Run tests (requires Flutter)
 flutter test
@@ -286,7 +286,7 @@ dart analyze --fatal-warnings .
 
 # 6. Run example
 cd example
-flutter pub get
+dart pub get
 flutter run
 ```
 

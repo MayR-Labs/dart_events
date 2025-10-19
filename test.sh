@@ -14,7 +14,7 @@ dart format --set-exit-if-changed .
 
 echo ""
 echo "🧪 Running tests..."
-flutter test --coverage
+dart test --coverage=coverage
 
 echo ""
 echo "✅ All checks passed!"

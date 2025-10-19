@@ -7,15 +7,15 @@
 ![Pub.dev Publisher](https://img.shields.io/pub/publisher/mayr_events?label=Publisher&style=plastic)
 ![Downloads](https://img.shields.io/pub/dm/mayr_events.svg?label=Downloads&style=plastic)
 
-![Build Status](https://img.shields.io/github/actions/workflow/status/YoungMayor/mayr_flutter_events/ci.yaml?label=Build)
-![Issues](https://img.shields.io/github/issues/YoungMayor/mayr_flutter_events.svg?label=Issues)
-![Last Commit](https://img.shields.io/github/last-commit/YoungMayor/mayr_flutter_events.svg?label=Latest%20Commit)
-![Contributors](https://img.shields.io/github/contributors/YoungMayor/mayr_flutter_events.svg?label=Contributors)
+![Build Status](https://img.shields.io/github/actions/workflow/status/MayR-Labs/dart_events/ci.yaml?label=Build)
+![Issues](https://img.shields.io/github/issues/MayR-Labs/dart_events.svg?label=Issues)
+![Last Commit](https://img.shields.io/github/last-commit/MayR-Labs/dart_events.svg?label=Latest%20Commit)
+![Contributors](https://img.shields.io/github/contributors/MayR-Labs/dart_events.svg?label=Contributors)
 
 
 # mayr_events
 
-A lightweight, expressive event and listener system for Flutter and Dart — inspired by Laravel’s event architecture.
+A lightweight, expressive event and listener system for Dart — inspired by Laravel’s event architecture.
 
 Mayr Events helps you decouple logic in your app using an elegant, easy-to-read syntax while supporting async listeners, isolates, middleware hooks, and more.
 
@@ -29,7 +29,7 @@ Mayr Events helps you decouple logic in your app using an elegant, easy-to-read 
 - ✅ Global `onError` handler
 - ✅ Once-only listeners
 - ✅ Auto event registration
-- ✅ Works seamlessly across Flutter or pure Dart
+- ✅ Works seamlessly with both pure Dart and Flutter projects
 
 ---
 
@@ -225,7 +225,7 @@ If you encounter a bug, unexpected behaviour, or have feature requests:
 
 **MayR Labs**
 
-Crafting clean, reliable, and human-centric Flutter and Dart solutions.
+Crafting clean, reliable, and human-centric Dart solutions.
 🌍 [mayrlabs.com](https://mayrlabs.com)
 
 ---
@@ -235,7 +235,7 @@ This package is licensed under the MIT License — which means you are free to u
 
 > See the [LICENSE](LICENSE) file for more details.
 
-MIT © 2025 [MayR Labs](https://github.com/mayrlabs)
+MIT © 2025 [MayR Labs](https://github.com/MayR-Labs)
 
 ---
 

@@ -82,8 +82,8 @@ We actively welcome your pull requests! Here's how to contribute code:
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/YoungMayor/mayr_flutter_events.git
-cd mayr_flutter_events
+git clone https://github.com/MayR-Labs/dart_events.git
+cd dart_events
 ```
 
 2. **Install dependencies:**
