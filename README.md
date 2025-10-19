@@ -1,21 +1,13 @@
 ![License](https://img.shields.io/badge/license-MIT-blue.svg?label=Licence)
-![Platform](https://img.shields.io/badge/Platform-Flutter-blue.svg)
+![Platform](https://img.shields.io/badge/Platform-Dart-blue.svg)
 
 ![Pub Version](https://img.shields.io/pub/v/mayr_events?style=plastic&label=Version)
 ![Pub.dev Score](https://img.shields.io/pub/points/mayr_events?label=Score&style=plastic)
 ![Pub Likes](https://img.shields.io/pub/likes/mayr_events?label=Likes&style=plastic)
-![Pub.dev Publisher](https://img.shields.io/pub/publisher/mayr_events?label=Publisher&style=plastic)
-![Downloads](https://img.shields.io/pub/dm/mayr_events.svg?label=Downloads&style=plastic)
-
-![Build Status](https://img.shields.io/github/actions/workflow/status/YoungMayor/mayr_flutter_events/ci.yaml?label=Build)
-![Issues](https://img.shields.io/github/issues/YoungMayor/mayr_flutter_events.svg?label=Issues)
-![Last Commit](https://img.shields.io/github/last-commit/YoungMayor/mayr_flutter_events.svg?label=Latest%20Commit)
-![Contributors](https://img.shields.io/github/contributors/YoungMayor/mayr_flutter_events.svg?label=Contributors)
-
 
 # mayr_events
 
-A lightweight, expressive event and listener system for Flutter and Dart — inspired by Laravel’s event architecture.
+A lightweight, expressive event and listener system for Dart — inspired by Laravel's event architecture.
 
 Mayr Events helps you decouple logic in your app using an elegant, easy-to-read syntax while supporting async listeners, isolates, middleware hooks, and more.
 
@@ -23,13 +15,12 @@ Mayr Events helps you decouple logic in your app using an elegant, easy-to-read 
 
 ## 🚀 Features
 
-- ✅ Simple and expressive API
-- ✅ Async listeners (run in isolate)
-- ✅ Middleware-style `beforeHandle` hooks
-- ✅ Global `onError` handler
+- ✅ Simple functional API - no class extension needed
+- ✅ Event-level hooks (beforeHandle, shouldHandle, onError)
+- ✅ Global keyed handlers for cross-cutting concerns
+- ✅ Async listeners with isolate support
 - ✅ Once-only listeners
-- ✅ Auto event registration
-- ✅ Works seamlessly across Flutter or pure Dart
+- ✅ Pure Dart - works everywhere
 
 ---
 
@@ -39,8 +30,8 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  mayr_events: ^1.0.0
-````
+  mayr_events: ^2.0.0
+```
 
 Then import:
 
@@ -54,33 +45,35 @@ import 'package:mayr_events/mayr_events.dart';
 
 ## ⚙️ Setup
 
-Start by creating an **Event Setup** class that defines your listeners.
+Create a function to register your listeners and handlers:
 
 ```dart
-class MyAppEvents extends MayrEventSetup {
-  @override
-  void registerListeners() {
-    MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
-    MayrEvents.on<OrderPlacedEvent>(OrderAnalyticsListener());
-  }
+void setupEvents() {
+  // Register listeners
+  MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
+  MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());
 
-  @override
-  Future<void> beforeHandle(event, listener) async {
-    print('[Before] ${listener.runtimeType} for ${event.runtimeType}');
-  }
+  // Add global handlers
+  MayrEvents.beforeHandle('logger', (event, listener) async {
+    print('Handling ${event.runtimeType}');
+  });
 
-  @override
-  Future<void> onError(event, error, stack) async {
-    print('[Error] ${event.runtimeType}: $error');
-  }
+  MayrEvents.onError('error_logger', (event, error, stack) async {
+    print('Error: $error');
+  });
+
+  MayrEvents.shouldHandle('validator', (event) {
+    // Return false to prevent listener execution
+    return true;
+  });
 }
 ```
 
-Call `init()` in your `main()` (preferably before running your app):
+Call this function before firing any events (typically in `main()`):
 
 ```dart
-void main() async {
-  await MyAppEvents().init();
+void main() {
+  setupEvents();
   runApp(MyApp());
 }
 ```
@@ -89,42 +82,63 @@ void main() async {
 
 ## 🧠 Defining Events
 
-Events are simple data classes extending `MayrEvent` (we recommend defining all your events on a folder for better organisation):
+Events are simple data classes extending `MayrEvent`:
 
 ```dart
 class UserRegisteredEvent extends MayrEvent {
   final String userId;
+  final String email;
 
-  const UserRegisteredEvent(this.userId);
+  const UserRegisteredEvent(this.userId, this.email);
+}
+```
+
+### Event-Level Hooks
+
+Events can define their own hooks:
+
+```dart
+class UserRegisteredEvent extends MayrEvent {
+  final String userId;
+  final String email;
+
+  const UserRegisteredEvent(this.userId, this.email);
+
+  @override
+  Future<void> Function(MayrEvent, MayrListener)? get beforeHandle =>
+      (event, listener) async {
+        print('About to handle user registration');
+      };
+
+  @override
+  bool Function(MayrEvent)? get shouldHandle =>
+      (event) => (event as UserRegisteredEvent).userId.isNotEmpty;
+
+  @override
+  Future<void> Function(MayrEvent, Object, StackTrace)? get onError =>
+      (event, error, stack) async {
+        print('Registration failed: $error');
+      };
 }
 ```
 
 ---
 
-## ⚡ Creating Listeners
+## 👂 Defining Listeners
 
-Listeners extend `MayrListener<T>` and define how to handle the event (we recommend defining all your listeners on one folder for better organisation).
+Listeners handle events:
 
 ```dart
 class SendWelcomeEmailListener extends MayrListener<UserRegisteredEvent> {
   @override
-  // Setting this to true causes the event to run in an isolate
-  bool get runInIsolate => true;
-
-  @override
-  /// Setting this to true causes the listener to run only once per lifecycle
-  bool get once => true;
-
-  @override
   Future<void> handle(UserRegisteredEvent event) async {
     await EmailService.sendWelcome(event.userId);
-
-    print('Welcome email sent!');
+    print('Welcome email sent to ${event.email}');
   }
 }
 ```
 
-**Once-only listeners:**
+### Once-Only Listeners
 
 ```dart
 class TrackAppLaunchListener extends MayrListener<AppLaunchedEvent> {
@@ -145,107 +159,138 @@ class TrackAppLaunchListener extends MayrListener<AppLaunchedEvent> {
 Anywhere in your app:
 
 ```dart
-MayrEvents.fire(UserRegisteredEvent('U123'));
+await MayrEvents.fire(UserRegisteredEvent('U123', 'user@example.com'));
 ```
-
-All matching listeners will automatically run (some even in isolates).
 
 ---
 
-## 🧩 Advanced Example
+## 🔧 Advanced Features
+
+### Global Handlers with Keys
+
+Register multiple handlers using unique keys:
 
 ```dart
+// Add handlers
+MayrEvents.beforeHandle('logger', loggerCallback);
+MayrEvents.beforeHandle('metrics', metricsCallback);
+MayrEvents.onError('sentry', sentryCallback);
+MayrEvents.shouldHandle('rate_limiter', rateLimitCallback);
+
+// Remove specific handlers
+MayrEvents.removeBeforeHandler('logger');
+MayrEvents.removeErrorHandler('sentry');
+MayrEvents.removeShouldHandle('rate_limiter');
+```
+
+### Listener Management
+
+```dart
+// Remove specific listener
+final listener = SendWelcomeEmailListener();
+MayrEvents.on<UserRegisteredEvent>(listener);
+MayrEvents.remove<UserRegisteredEvent>(listener);
+
+// Remove all listeners for an event
+MayrEvents.removeAll<UserRegisteredEvent>();
+
+// Clear everything
+MayrEvents.clear();
+
+// Check listeners
+bool hasListeners = MayrEvents.hasListeners<UserRegisteredEvent>();
+int count = MayrEvents.listenerCount<UserRegisteredEvent>();
+```
+
+### Run Listeners in Isolates
+
+For CPU-intensive operations:
+
+```dart
+class HeavyProcessingListener extends MayrListener<DataEvent> {
+  @override
+  bool get runInIsolate => true;
+
+  @override
+  Future<void> handle(DataEvent event) async {
+    // CPU-intensive work runs in separate isolate
+  }
+}
+```
+
+---
+
+## 📚 Complete Example
+
+```dart
+import 'package:mayr_events/mayr_events.dart';
+
+// Define event
 class OrderPlacedEvent extends MayrEvent {
   final String orderId;
   final double total;
-
   const OrderPlacedEvent(this.orderId, this.total);
 }
 
-class OrderAnalyticsListener extends MayrListener<OrderPlacedEvent> {
+// Define listener
+class ProcessOrderListener extends MayrListener<OrderPlacedEvent> {
   @override
   Future<void> handle(OrderPlacedEvent event) async {
-    print('Analytics logged for order ${event.orderId}');
+    print('Processing order ${event.orderId}');
   }
 }
 
-void main() async {
-  await MyAppEvents().init();
+void setupEvents() {
+  MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());
+  
+  MayrEvents.beforeHandle('logger', (event, listener) async {
+    print('[${DateTime.now()}] Event fired');
+  });
+}
 
-  MayrEvents.fire(OrderPlacedEvent('ORD_908', 1200));
+void main() async {
+  setupEvents();
+  await MayrEvents.fire(OrderPlacedEvent('ORD_123', 99.99));
 }
 ```
 
 ---
 
-## 🧱 Philosophy
+## 🔄 Migration from v1.x
 
-> *"Keep it expressive. Keep it simple. Keep it Mayr."*
-> This package is designed for developers who value clarity over complexity, and who want a Laravel-style event flow inside Flutter.
+See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions.
 
----
-
-## 📢 Additional Information
-
-### 🤝 Contributing
-Contributions are highly welcome!
-If you have ideas for new extensions, improvements, or fixes, feel free to fork the repository and submit a pull request.
-
-Please make sure to:
-- Follow the existing coding style.
-- Write tests for new features.
-- Update documentation if necessary.
-
-> Let's build something amazing together!
-
-For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-### 📚 Additional Documentation
-
-- **[QUICKSTART.md](QUICKSTART.md)** - 5-minute tutorial to get started
-- **[API.md](API.md)** - Complete API reference and best practices
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Detailed guidelines for contributors
-- **[TESTING.md](TESTING.md)** - Information about running and writing tests
-- **[DESIGN.md](DESIGN.md)** - Architecture and design decisions
-- **[example/](example/)** - Working Flutter example application
+**Key Changes in v2.0:**
+- No class extension required - use functional API
+- Event-level hooks available
+- Keyed handler system for better control
+- Pure Dart package (no Flutter dependency)
 
 ---
 
-### 🐛 Reporting Issues
-If you encounter a bug, unexpected behaviour, or have feature requests:
-- Open an issue on the repository.
-- Provide a clear description and steps to reproduce (if it's a bug).
-- Suggest improvements if you have any ideas.
+## 📖 Documentation
 
-> Your feedback helps make the package better for everyone!
-
----
-
-### 🧑‍💻 Author
-
-**MayR Labs**
-
-Crafting clean, reliable, and human-centric Flutter and Dart solutions.
-🌍 [mayrlabs.com](https://mayrlabs.com)
+- [Quick Start Guide](QUICKSTART.md)
+- [Migration Guide](MIGRATION.md)
+- [Changelog](CHANGELOG.md)
+- [API Documentation](https://pub.dev/documentation/mayr_events/latest/)
 
 ---
 
-### 📜 Licence
-This package is licensed under the MIT License — which means you are free to use it for commercial and non-commercial projects, with proper attribution.
+## 🤝 Contributing
 
-> See the [LICENSE](LICENSE) file for more details.
-
-MIT © 2025 [MayR Labs](https://github.com/mayrlabs)
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 🌟 Support
+## 📄 License
 
-If you find this package helpful, please consider giving it a ⭐️ on GitHub — it motivates and helps the project grow!
+MIT License - see [LICENSE](LICENSE) for details.
 
-You can also support by:
-- Sharing the package with your friends, colleagues, and tech communities.
-- Using it in your projects and giving feedback.
-- Contributing new ideas, features, or improvements.
+---
 
-> Every little bit of support counts! 🚀💙
+## 🔗 Links
+
+- **Repository**: https://github.com/MayR-Labs/dart_events
+- **Homepage**: https://mayrlabs.com
+- **Issues**: https://github.com/MayR-Labs/dart_events/issues

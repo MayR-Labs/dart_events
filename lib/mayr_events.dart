@@ -10,4 +10,3 @@ library;
 export 'src/mayr_event.dart';
 export 'src/mayr_listener.dart';
 export 'src/mayr_events.dart';
-export 'src/mayr_event_setup.dart';

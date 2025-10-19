@@ -1,19 +1,11 @@
 name: mayr_events_example
-description: Example application demonstrating mayr_events package
+description: Example usage of the mayr_events package
 version: 1.0.0
 publish_to: 'none'
 
 environment:
   sdk: ^3.9.2
-  flutter: ">=1.17.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
   mayr_events:
     path: ../
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^5.0.0

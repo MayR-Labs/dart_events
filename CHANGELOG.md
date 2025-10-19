@@ -1,3 +1,50 @@
+## 2.0.0
+
+### 🎉 Complete API Redesign - Functional Approach
+
+- **BREAKING**: Removed class extension pattern - now uses functional API
+- **BREAKING**: `MayrEventSetup` completely removed
+- **BREAKING**: No more `MayrEvents.instance` - use static methods directly
+- **BREAKING**: Pure Dart package (Flutter removed from tests/examples)
+- ✅ **NEW**: Event-level hooks (`beforeHandle`, `shouldHandle`, `onError`)
+- ✅ **NEW**: Keyed handler system for better management
+- ✅ **NEW**: `shouldHandle` callbacks for validation
+- ✅ **NEW**: Handler removal methods (`removeBeforeHandler`, etc.)
+- ✅ Simplified setup with function-based pattern
+- ✅ No class extension or boilerplate needed
+- ✅ Pure Dart - works in any Dart project
+
+### New API Pattern
+
+**Setup:**
+```dart
+void setupEvents() {
+  MayrEvents.on<UserEvent>(UserListener());
+  MayrEvents.beforeHandle('logger', (event, listener) async { });
+  MayrEvents.shouldHandle('validator', (event) => true);
+}
+```
+
+**Usage:**
+```dart
+void main() {
+  setupEvents();
+}
+
+await MayrEvents.fire(UserEvent());
+```
+
+### Updated
+
+- Complete rewrite of `MayrEvents` class
+- `MayrEvent` base class now supports optional hooks
+- Example converted to pure Dart console app
+- All tests updated to use `package:test`
+- Documentation completely rewritten
+- Repository: https://github.com/MayR-Labs/dart_events
+
+---
+
 ## 1.0.0
 
 - 🎉 First stable release
