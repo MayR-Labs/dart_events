@@ -1,6 +1,6 @@
 name: mayr_events
 description: "A lightweight, expressive event and listener system for Dart, inspired by Laravel's event architecture."
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/MayR-Labs/dart_events
 repository: https://github.com/MayR-Labs/dart_events
 issue_tracker: https://github.com/MayR-Labs/dart_events/issues
