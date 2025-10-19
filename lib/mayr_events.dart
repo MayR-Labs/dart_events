@@ -10,3 +10,5 @@ library;
 export 'src/mayr_event.dart';
 export 'src/mayr_listener.dart';
 export 'src/mayr_events.dart';
+export 'src/queue_config.dart';
+export 'src/queue_worker.dart';

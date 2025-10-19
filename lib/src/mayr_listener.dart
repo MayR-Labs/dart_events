@@ -30,11 +30,11 @@ abstract class MayrListener<T extends MayrEvent> {
 
   /// Whether this listener should be queued for later execution.
   ///
-  /// This is a placeholder for future queuing functionality.
-  /// Currently not implemented.
+  /// If `true` and queue system is set up, the listener will be executed
+  /// asynchronously in a queue worker. If `false`, it runs immediately.
   ///
-  /// Defaults to `true`.
-  bool get queued => true;
+  /// Defaults to `false`.
+  bool get queued => false;
 
   /// Whether this listener should run in an isolate.
   ///
@@ -47,6 +47,28 @@ abstract class MayrListener<T extends MayrEvent> {
   ///
   /// Defaults to `false`.
   bool get runInIsolate => false;
+
+  /// The queue name to send this listener's jobs to.
+  ///
+  /// Only used if [queued] is `true` and queue system is configured.
+  /// If the specified queue doesn't exist, the fallback queue is used.
+  ///
+  /// Returns `null` by default (no specific queue).
+  String? get queue => null;
+
+  /// The timeout duration for this listener's execution.
+  ///
+  /// Only used when [queued] is `true`.
+  ///
+  /// Defaults to 60 seconds.
+  Duration get timeout => const Duration(seconds: 60);
+
+  /// The number of retries allowed if this listener throws an error.
+  ///
+  /// Only used when [queued] is `true`. Maximum value is 30.
+  ///
+  /// Defaults to 3.
+  int get retries => 3;
 
   /// Handles the event.
   ///

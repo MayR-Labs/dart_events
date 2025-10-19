@@ -3,6 +3,8 @@ import 'dart:isolate';
 
 import 'mayr_event.dart';
 import 'mayr_listener.dart';
+import 'queue_config.dart';
+import 'queue_worker.dart';
 
 /// Global event bus for the Mayr Events system.
 ///
@@ -46,6 +48,12 @@ class MayrEvents {
 
   /// Map of keyed callbacks that determine if a listener should handle an event.
   final Map<String, bool Function(MayrEvent)> _shouldHandlers = {};
+
+  /// Queue configuration for the event system.
+  QueueConfig? _queueConfig;
+
+  /// Active queue workers.
+  final Map<String, QueueWorker> _queueWorkers = {};
 
   /// Registers a listener for a specific event type.
   ///
@@ -121,6 +129,27 @@ class MayrEvents {
     _instance._shouldHandlers.remove(key);
   }
 
+  /// Sets up the queue system for queued listeners.
+  ///
+  /// ```dart
+  /// MayrEvents.setupQueue(
+  ///   fallbackQueue: 'default',
+  ///   queues: ['emails', 'notifications', 'analytics'],
+  ///   defaultTimeout: Duration(seconds: 60),
+  /// );
+  /// ```
+  static void setupQueue({
+    required String fallbackQueue,
+    required List<String> queues,
+    Duration defaultTimeout = const Duration(seconds: 60),
+  }) {
+    _instance._queueConfig = QueueConfig(
+      fallbackQueue: fallbackQueue,
+      queues: queues,
+      defaultTimeout: defaultTimeout,
+    );
+  }
+
   /// Fires an event to all registered listeners.
   ///
   /// ```dart
@@ -159,11 +188,16 @@ class MayrEvents {
       }
 
       try {
-        // Execute listener in isolate or main thread
-        if (listener.runInIsolate) {
-          await Isolate.run(() => listener.handle(event));
+        // Check if listener should be queued
+        if (listener.queued) {
+          await _instance._handleQueuedListener(event, listener);
         } else {
-          await listener.handle(event);
+          // Execute listener in isolate or main thread
+          if (listener.runInIsolate) {
+            await Isolate.run(() => listener.handle(event));
+          } else {
+            await listener.handle(event);
+          }
         }
 
         // Remove once-only listeners after successful execution
@@ -200,6 +234,8 @@ class MayrEvents {
     _instance._beforeHandlers.clear();
     _instance._errorHandlers.clear();
     _instance._shouldHandlers.clear();
+    _instance._queueConfig = null;
+    _instance._queueWorkers.clear();
   }
 
   /// Returns the number of listeners registered for an event type.
@@ -210,5 +246,69 @@ class MayrEvents {
   /// Returns whether any listeners are registered for an event type.
   static bool hasListeners<T extends MayrEvent>() {
     return (_instance._listeners[T]?.isNotEmpty ?? false);
+  }
+
+  /// Handles a queued listener by adding it to the appropriate queue.
+  Future<void> _handleQueuedListener<T extends MayrEvent>(
+    T event,
+    MayrListener<T> listener,
+  ) async {
+    if (_queueConfig == null) {
+      throw StateError(
+        'Queue system not configured. Call setupQueue() first.',
+      );
+    }
+
+    // Resolve which queue to use
+    final queueName = _queueConfig!.resolveQueue(listener.queue);
+
+    // Get or create queue worker
+    final worker = _queueWorkers.putIfAbsent(
+      queueName,
+      () => QueueWorker(queueName),
+    );
+
+    // Clamp retries to max 30
+    final retries = listener.retries.clamp(0, 30);
+
+    // Create error handler that calls both event and global error handlers
+    Future<void> handleError(T evt, Object error, StackTrace stack) async {
+      // Run event-level error handler if it exists
+      if (event.onError != null) {
+        await event.onError!(evt, error, stack);
+      }
+
+      // Run global error handlers
+      for (final callback in _errorHandlers.values) {
+        await callback(evt, error, stack);
+      }
+    }
+
+    // Create and enqueue job
+    final job = QueueJob<T>(
+      event: event,
+      listener: listener,
+      timeout: listener.timeout,
+      retries: retries,
+      onError: handleError,
+    );
+
+    worker.enqueue(job);
+
+    // Schedule cleanup of empty workers
+    _scheduleWorkerCleanup(queueName);
+  }
+
+  /// Schedules cleanup of a queue worker if it becomes empty.
+  void _scheduleWorkerCleanup(String queueName) {
+    final worker = _queueWorkers[queueName];
+    if (worker == null) return;
+
+    // Wait for worker to be empty, then remove it
+    worker.waitUntilEmpty().then((_) {
+      if (worker.isEmpty) {
+        _queueWorkers.remove(queueName);
+      }
+    });
   }
 }

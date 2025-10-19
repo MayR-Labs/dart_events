@@ -102,7 +102,7 @@ void main() {
     test('has default values', () {
       final listener = TestListener();
       expect(listener.once, false);
-      expect(listener.queued, true);
+      expect(listener.queued, false);
       expect(listener.runInIsolate, false);
     });
 
