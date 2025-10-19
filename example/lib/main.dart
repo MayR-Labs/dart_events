@@ -126,7 +126,7 @@ void main() async {
   await MyAppEvents().init();
 
   // Fire app launched event
-  await MayrEvents.instance.fire(const AppLaunchedEvent());
+  await MayrEvents.fire(const AppLaunchedEvent());
 
   runApp(const MyApp());
 }
@@ -164,7 +164,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing UserRegisteredEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(UserRegisteredEvent(userId, email));
+    await MayrEvents.fire(UserRegisteredEvent(userId, email));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -185,7 +185,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing OrderPlacedEvent');
     print('========================================');
 
-    await MayrEvents.instance.fire(OrderPlacedEvent(orderId, total));
+    await MayrEvents.fire(OrderPlacedEvent(orderId, total));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -202,7 +202,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing AppLaunchedEvent (again)');
     print('========================================');
 
-    await MayrEvents.instance.fire(const AppLaunchedEvent());
+    await MayrEvents.fire(const AppLaunchedEvent());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
