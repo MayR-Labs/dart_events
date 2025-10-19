@@ -16,10 +16,11 @@ class UserRegisteredEvent extends MayrEvent {
 
   /// Example of event-level beforeHandle hook
   @override
-  Future<void> Function(MayrEvent, MayrListener)? get beforeHandle =>
-      (event, listener) async {
-        print('  [Event Hook] About to handle user registration');
-      };
+  Future<void> Function(MayrEvent, MayrListener)? get beforeHandle {
+    return (event, listener) async {
+      print('  [Event Hook] About to handle user registration');
+    };
+  }
 }
 
 /// Event fired when an order is placed
@@ -73,8 +74,10 @@ void setupEvents() {
 
   // Register global beforeHandle hook
   MayrEvents.beforeHandle('logger', (event, listener) async {
-    print('[${DateTime.now().toIso8601String()}] '
-        '${listener.runtimeType} handling ${event.runtimeType}');
+    print(
+      '[${DateTime.now().toIso8601String()}] '
+      '${listener.runtimeType} handling ${event.runtimeType}',
+    );
   });
 
   // Register global error handler
@@ -113,9 +116,7 @@ Future<void> main() async {
   print('========================================');
   print('🔥 Firing OrderPlacedEvent');
   print('========================================');
-  await MayrEvents.fire(
-    const OrderPlacedEvent('ORD001', 99.99),
-  );
+  await MayrEvents.fire(const OrderPlacedEvent('ORD001', 99.99));
 
   print('\n');
 

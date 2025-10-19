@@ -33,7 +33,8 @@ abstract class MayrEvent {
   /// Optional callback to run before each listener handles this event.
   ///
   /// This is executed before the global beforeHandle callbacks.
-  Future<void> Function(MayrEvent event, MayrListener listener)? get beforeHandle => null;
+  Future<void> Function(MayrEvent event, MayrListener listener)?
+  get beforeHandle => null;
 
   /// Optional callback to determine if listeners should handle this event.
   ///
@@ -44,5 +45,6 @@ abstract class MayrEvent {
   /// Optional callback to handle errors when a listener throws an exception.
   ///
   /// This is executed before the global error handlers.
-  Future<void> Function(MayrEvent event, Object error, StackTrace stack)? get onError => null;
+  Future<void> Function(MayrEvent event, Object error, StackTrace stack)?
+  get onError => null;
 }

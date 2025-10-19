@@ -38,11 +38,11 @@ class MayrEvents {
 
   /// Map of keyed callbacks to run before each listener handles an event.
   final Map<String, Future<void> Function(MayrEvent, MayrListener)>
-      _beforeHandlers = {};
+  _beforeHandlers = {};
 
   /// Map of keyed callbacks for error handling.
   final Map<String, Future<void> Function(MayrEvent, Object, StackTrace)>
-      _errorHandlers = {};
+  _errorHandlers = {};
 
   /// Map of keyed callbacks that determine if a listener should handle an event.
   final Map<String, bool Function(MayrEvent)> _shouldHandlers = {};
@@ -84,7 +84,7 @@ class MayrEvents {
   static void onError(
     String key,
     Future<void> Function(MayrEvent event, Object error, StackTrace stack)
-        callback,
+    callback,
   ) {
     _instance._errorHandlers[key] = callback;
   }

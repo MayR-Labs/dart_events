@@ -206,7 +206,7 @@ void main() {
 
     test('supports shouldHandle callbacks', () async {
       final listener = TestListener();
-      
+
       MayrEvents.on<TestEvent>(listener);
       MayrEvents.shouldHandle('validator', (event) {
         return event is TestEvent && event.message != 'skip';
@@ -228,9 +228,9 @@ void main() {
       });
 
       await MayrEvents.fire(const TestEvent('first'));
-      
+
       MayrEvents.removeBeforeHandler('test');
-      
+
       await MayrEvents.fire(const TestEvent('second'));
 
       expect(logs, ['logged']);
