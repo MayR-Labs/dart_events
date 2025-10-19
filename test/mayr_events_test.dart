@@ -338,9 +338,7 @@ void main() {
       final setup = TestEventSetup();
       await setup.init();
 
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u1', 'user@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u1', 'user@test.com'));
 
       expect(setup.beforeHandleLogs, [
         'WelcomeEmailListener->UserRegisteredEvent',
@@ -363,13 +361,9 @@ void main() {
       final setup = TestEventSetup();
       await setup.init();
 
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u1', 'user1@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u1', 'user1@test.com'));
       await MayrEvents.fire(const OrderPlacedEvent('o1', 99.99));
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u2', 'user2@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u2', 'user2@test.com'));
 
       expect(setup.welcomeListener.sentTo, [
         'user1@test.com',
@@ -385,13 +379,9 @@ void main() {
       await setup.init();
 
       // Fire multiple events
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u1', 'alice@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u1', 'alice@test.com'));
       await MayrEvents.fire(const OrderPlacedEvent('o1', 49.99));
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u2', 'bob@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u2', 'bob@test.com'));
       await MayrEvents.fire(const OrderPlacedEvent('o2', 149.99));
 
       // Check results
