@@ -1,3 +1,43 @@
+## 2.0.0 (Unreleased)
+
+### 🎉 Major API Simplification
+
+- **BREAKING**: `MayrEvents` is now an abstract base class (was singleton)
+- **BREAKING**: Removed `MayrEvents.instance` - users now extend `MayrEvents`
+- **BREAKING**: `MayrEventSetup` is deprecated
+- ✅ New simplified pattern: users extend `MayrEvents` directly
+- ✅ Automatic lazy initialization on first use
+- ✅ Static `fire()` method pattern for cleaner syntax
+- ✅ No manual `init()` call required
+- ✅ Each app has its own events class (better type safety)
+
+### Migration
+
+See [MIGRATION.md](MIGRATION.md) for detailed upgrade instructions.
+
+**Before (v1.x):**
+```dart
+class MyEvents extends MayrEventSetup { ... }
+await MyEvents().init();
+await MayrEvents.instance.fire(event);
+```
+
+**After (v2.0):**
+```dart
+class MyEvents extends MayrEvents { ... }
+// No init needed!
+await MyEvents.fire(event);
+```
+
+### Updated
+
+- Documentation updated for new pattern
+- Example app updated
+- All tests updated
+- README, QUICKSTART, and other guides updated
+
+---
+
 ## 1.0.0
 
 - 🎉 First stable release
