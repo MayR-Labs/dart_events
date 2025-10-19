@@ -85,9 +85,6 @@ class TrackAppLaunchListener extends MayrListener<AppLaunchedEvent> {
 
 /// Central event configuration for the app
 class MyAppEvents extends MayrEvents {
-  static final MyAppEvents instance = MyAppEvents._();
-  MyAppEvents._();
-
   @override
   void registerListeners() {
     // User registration events
@@ -116,11 +113,6 @@ class MyAppEvents extends MayrEvents {
     // Handle errors from listeners
     print('[ERROR] ${event.runtimeType} failed: $error');
   }
-
-  // Static fire method for easy access
-  static Future<void> fire<T extends MayrEvent>(T event) async {
-    await instance._fire(event);
-  }
 }
 
 // ============================================================================
@@ -130,8 +122,11 @@ class MyAppEvents extends MayrEvents {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Fire app launched event - no init() call needed!
-  await MyAppEvents.fire(const AppLaunchedEvent());
+  // Initialize the events system
+  MyAppEvents();
+
+  // Fire app launched event - uses static method from base class!
+  await MayrEvents.fire(const AppLaunchedEvent());
 
   runApp(const MyApp());
 }
@@ -169,7 +164,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing UserRegisteredEvent');
     print('========================================');
 
-    await MyAppEvents.fire(UserRegisteredEvent(userId, email));
+    await MayrEvents.fire(UserRegisteredEvent(userId, email));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -190,7 +185,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing OrderPlacedEvent');
     print('========================================');
 
-    await MyAppEvents.fire(OrderPlacedEvent(orderId, total));
+    await MayrEvents.fire(OrderPlacedEvent(orderId, total));
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -207,7 +202,7 @@ class _EventExamplePageState extends State<EventExamplePage> {
     print('🔥 Firing AppLaunchedEvent (again)');
     print('========================================');
 
-    await MyAppEvents.fire(const AppLaunchedEvent());
+    await MayrEvents.fire(const AppLaunchedEvent());
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

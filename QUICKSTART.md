@@ -66,10 +66,6 @@ import '../events/user_events.dart';
 import '../listeners/welcome_email_listener.dart';
 
 class AppEvents extends MayrEvents {
-  // Singleton pattern
-  static final AppEvents instance = AppEvents._();
-  AppEvents._();
-
   @override
   void registerListeners() {
     // Register all your listeners here
@@ -87,15 +83,10 @@ class AppEvents extends MayrEvents {
     // Optional: Handle errors globally
     print('[Error] ${event.runtimeType}: $error');
   }
-
-  // Static fire method
-  static Future<void> fire<T extends MayrEvent>(T event) async {
-    await instance._fire(event);
-  }
 }
 ```
 
-### Step 4: Use in main()
+### Step 4: Initialize in main()
 
 Update your `main.dart`:
 
@@ -106,7 +97,8 @@ import 'config/app_events.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // No init() call needed - auto-initializes on first use!
+  // Initialize the event system
+  AppEvents();
   
   runApp(MyApp());
 }
@@ -128,7 +120,7 @@ In any screen or widget:
 
 ```dart
 import 'package:flutter/material.dart';
-import 'config/app_events.dart';
+import 'package:mayr_events/mayr_events.dart';
 import '../events/user_events.dart';
 
 class RegisterScreen extends StatelessWidget {
@@ -137,7 +129,7 @@ class RegisterScreen extends StatelessWidget {
     final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
     
     // Fire the event - simple!
-    await AppEvents.fire(
+    await MayrEvents.fire(
       UserRegisteredEvent(userId, email),
     );
     

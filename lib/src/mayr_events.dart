@@ -4,32 +4,36 @@ import 'dart:isolate';
 import 'mayr_event.dart';
 import 'mayr_listener.dart';
 
+/// Global singleton instance of the events system.
+MayrEvents? _globalInstance;
+
 /// Base class for application event systems.
 ///
-/// Extend this class to create your own event system. The instance
-/// is automatically initialized on first use.
+/// Extend this class to create your own event system. Create a singleton
+/// instance and the system will automatically initialize on first use.
 ///
 /// ## Usage
 ///
 /// ```dart
 /// class MyEvents extends MayrEvents {
-///   static final MyEvents instance = MyEvents._();
-///   MyEvents._();
-///
 ///   @override
 ///   void registerListeners() {
 ///     on<UserRegisteredEvent>(SendWelcomeEmailListener());
 ///   }
-///
-///   static Future<void> fire<T extends MayrEvent>(T event) async {
-///     await instance._fire(event);
-///   }
 /// }
 ///
-/// // Usage - no init() call needed!
-/// await MyEvents.fire(UserRegisteredEvent('user@example.com'));
+/// // Set up your events class (typically in main or before first use)
+/// final events = MyEvents();
+///
+/// // Fire events using the static method
+/// await MayrEvents.fire(UserRegisteredEvent('user@example.com'));
 /// ```
 abstract class MayrEvents {
+  /// Creates a MayrEvents instance and sets it as the global instance.
+  MayrEvents() {
+    _globalInstance = this;
+  }
+
   /// Map of event types to their registered listeners.
   final Map<Type, List<MayrListener>> _listeners = {};
 
@@ -43,14 +47,26 @@ abstract class MayrEvents {
   /// Whether this instance has been initialized.
   bool _initialized = false;
 
-  /// Internal fire method that ensures initialization.
+  /// Fires an event to all registered listeners.
   ///
-  /// Subclasses should call this from their static fire method.
-  Future<void> _fire<T extends MayrEvent>(T event) async {
-    if (!_initialized) {
-      _init();
+  /// This static method automatically initializes the event system on first use.
+  ///
+  /// ```dart
+  /// await MayrEvents.fire(UserRegisteredEvent('user@example.com'));
+  /// ```
+  static Future<void> fire<T extends MayrEvent>(T event) async {
+    if (_globalInstance == null) {
+      throw StateError(
+        'No MayrEvents instance has been created. '
+        'Please create an instance of your MayrEvents subclass first.',
+      );
     }
-    await _fireEvent(event);
+
+    if (!_globalInstance!._initialized) {
+      _globalInstance!._init();
+    }
+
+    await _globalInstance!._fireEvent(event);
   }
 
   /// Internal initialization method.

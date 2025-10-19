@@ -1,15 +1,17 @@
-## 2.0.0 (Unreleased)
+## 2.0.0
 
-### 🎉 Major API Simplification
+### 🎉 Major API Simplification & Dart Package Migration
 
-- **BREAKING**: `MayrEvents` is now an abstract base class (was singleton)
-- **BREAKING**: Removed `MayrEvents.instance` - users now extend `MayrEvents`
-- **BREAKING**: `MayrEventSetup` is deprecated
-- ✅ New simplified pattern: users extend `MayrEvents` directly
+- **BREAKING**: `MayrEvents` now uses a global singleton pattern
+- **BREAKING**: `MayrEventSetup` has been **removed** (not just deprecated)
+- **BREAKING**: Package converted to pure Dart (removed Flutter dependency)
+- **BREAKING**: Static `fire()` method is now on base `MayrEvents` class
+- ✅ Simplified pattern: extend `MayrEvents` with only 3 methods
+- ✅ Users call `MayrEvents.fire()` directly (not `MyEvents.fire()`)
 - ✅ Automatic lazy initialization on first use
-- ✅ Static `fire()` method pattern for cleaner syntax
-- ✅ No manual `init()` call required
-- ✅ Each app has its own events class (better type safety)
+- ✅ No singleton boilerplate needed in user classes
+- ✅ Repository moved to MayR Labs organization
+- ✅ New repository: https://github.com/MayR-Labs/dart_events
 
 ### Migration
 
@@ -25,8 +27,10 @@ await MayrEvents.instance.fire(event);
 **After (v2.0):**
 ```dart
 class MyEvents extends MayrEvents { ... }
-// No init needed!
-await MyEvents.fire(event);
+void main() {
+  MyEvents(); // Initialize once
+}
+await MayrEvents.fire(event); // Use base class static method
 ```
 
 ### Updated
@@ -34,7 +38,8 @@ await MyEvents.fire(event);
 - Documentation updated for new pattern
 - Example app updated
 - All tests updated
-- README, QUICKSTART, and other guides updated
+- Package now pure Dart (no Flutter dependency)
+- Links updated to MayR Labs organization
 
 ---
 
