@@ -159,14 +159,14 @@ void main() {
     test('queued listener requires queue setup', () async {
       final listener = QueuedListener();
       final List<String> errorLogs = [];
-      
+
       MayrEvents.on<QueuedTestEvent>(listener);
       MayrEvents.onError('queue_test', (event, error, stack) async {
         errorLogs.add(error.toString());
       });
 
       await MayrEvents.fire(const QueuedTestEvent('test'));
-      
+
       // Should have logged an error about queue not being configured
       expect(errorLogs.any((e) => e.contains('not configured')), true);
     });
@@ -307,10 +307,7 @@ void main() {
 
   group('Mixed Mode', () {
     setUp(() {
-      MayrEvents.setupQueue(
-        fallbackQueue: 'default',
-        queues: ['test_queue'],
-      );
+      MayrEvents.setupQueue(fallbackQueue: 'default', queues: ['test_queue']);
     });
 
     test('supports both queued and non-queued listeners', () async {

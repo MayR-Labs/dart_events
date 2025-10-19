@@ -22,8 +22,7 @@ class QueueJob<T extends MayrEvent> {
   int currentRetry = 0;
 
   /// Optional error callback.
-  final Future<void> Function(T event, Object error, StackTrace stack)?
-      onError;
+  final Future<void> Function(T event, Object error, StackTrace stack)? onError;
 
   /// Creates a new [QueueJob].
   QueueJob({
@@ -107,7 +106,7 @@ class QueueWorker {
     }
 
     _isProcessing = false;
-    
+
     // Notify anyone waiting for empty queue
     if (_emptyCompleter != null && !_emptyCompleter!.isCompleted) {
       _emptyCompleter!.complete();
@@ -117,14 +116,16 @@ class QueueWorker {
 
   /// Executes a single job with timeout.
   Future<void> _executeJob(QueueJob job) async {
-    await job.listener.handle(job.event).timeout(
-      job.timeout,
-      onTimeout: () {
-        throw TimeoutException(
-          'Job timed out after ${job.timeout.inSeconds}s',
+    await job.listener
+        .handle(job.event)
+        .timeout(
           job.timeout,
+          onTimeout: () {
+            throw TimeoutException(
+              'Job timed out after ${job.timeout.inSeconds}s',
+              job.timeout,
+            );
+          },
         );
-      },
-    );
   }
 }

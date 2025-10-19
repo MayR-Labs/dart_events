@@ -143,7 +143,7 @@ class ReliablePaymentProcessor extends MayrListener<PaymentProcessedEvent> {
   @override
   Future<void> handle(PaymentProcessedEvent event) async {
     attemptCount++;
-    
+
     // Fail on first two attempts to demonstrate retry
     if (attemptCount < 3) {
       print(
@@ -151,9 +151,11 @@ class ReliablePaymentProcessor extends MayrListener<PaymentProcessedEvent> {
       );
       throw Exception('Payment gateway temporarily unavailable');
     }
-    
+
     await Future.delayed(const Duration(milliseconds: 150));
-    print('✅ [QUEUED-payments] Payment processed successfully (attempt $attemptCount)');
+    print(
+      '✅ [QUEUED-payments] Payment processed successfully (attempt $attemptCount)',
+    );
   }
 }
 
@@ -233,7 +235,7 @@ Future<void> main() async {
   print('\n${'=' * 70}');
   print('✅ All examples completed!');
   print('=' * 70);
-  
+
   print('\nKey Features Demonstrated:');
   print('  ✓ Immediate vs. Queued listeners');
   print('  ✓ Multiple queues (emails, notifications, orders, payments)');
