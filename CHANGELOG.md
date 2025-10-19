@@ -1,3 +1,57 @@
+## 2.1.0 (Unreleased)
+
+### 🎉 Queued Listeners
+
+- ✅ **NEW**: Queue system for background job processing
+- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
+- ✅ **NEW**: Multiple named queues with fallback support
+- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
+- ✅ **NEW**: Configurable timeout per listener
+- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
+- ✅ **NEW**: Mix queued and non-queued listeners
+- ✅ Comprehensive test coverage for queue functionality
+- ✅ Example demonstrating queue features
+
+### Listener Properties Added
+
+- `bool get queued` - Enable background queue processing
+- `String? get queue` - Specify target queue name
+- `Duration get timeout` - Job timeout duration (default: 60s)
+- `int get retries` - Retry count on failure (default: 3, max: 30)
+
+### Usage
+
+```dart
+void setupEvents() {
+  // Setup queues
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+  
+  MayrEvents.on<OrderEvent>(ProcessOrderListener());
+}
+
+class ProcessOrderListener extends MayrListener<OrderEvent> {
+  @override
+  bool get queued => true;
+  
+  @override
+  String get queue => 'orders';
+  
+  @override
+  int get retries => 5;
+  
+  @override
+  Future<void> handle(OrderEvent event) async {
+    // Process in background with automatic retry
+  }
+}
+```
+
+---
+
 ## 2.0.0
 
 ### 🎉 Complete API Redesign - Functional Approach

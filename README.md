@@ -19,6 +19,7 @@ Mayr Events helps you decouple logic in your app using an elegant, easy-to-read 
 - ✅ Event-level hooks (beforeHandle, shouldHandle, onError)
 - ✅ Global keyed handlers for cross-cutting concerns
 - ✅ Async listeners with isolate support
+- ✅ **Queued listeners with retry and timeout support**
 - ✅ Once-only listeners
 - ✅ Pure Dart - works everywhere
 
@@ -217,6 +218,52 @@ class HeavyProcessingListener extends MayrListener<DataEvent> {
   }
 }
 ```
+
+### Queued Listeners
+
+Queue listeners for background processing with automatic retry and timeout support:
+
+```dart
+void setupEvents() {
+  // Setup queue system first
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications', 'orders'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+
+  // Register queued listeners
+  MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());
+}
+
+class ProcessOrderListener extends MayrListener<OrderPlacedEvent> {
+  @override
+  bool get queued => true;  // Enable queuing
+
+  @override
+  String get queue => 'orders';  // Specify queue name
+
+  @override
+  Duration get timeout => Duration(seconds: 60);  // Job timeout
+
+  @override
+  int get retries => 5;  // Max retries (capped at 30)
+
+  @override
+  Future<void> handle(OrderPlacedEvent event) async {
+    // This runs asynchronously in the background
+    await processOrder(event.orderId);
+  }
+}
+```
+
+**Queue Features:**
+- Multiple named queues for organizing different types of jobs
+- Automatic fallback queue for undefined queue names
+- Configurable timeout per listener
+- Automatic retry with configurable retry count (max 30)
+- Queue workers auto-cleanup when empty
+- Mix queued and non-queued listeners for the same event
 
 ---
 

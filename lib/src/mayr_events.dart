@@ -255,7 +255,7 @@ class MayrEvents {
   ) async {
     if (_queueConfig == null) {
       throw StateError(
-        'Queue system not configured. Call setupQueue() first.',
+        'Queue system not configured. Call MayrEvents.setupQueue() first.',
       );
     }
 
