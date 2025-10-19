@@ -1,3 +1,104 @@
+## 2.1.0 (Unreleased)
+
+### 🎉 Queued Listeners
+
+- ✅ **NEW**: Queue system for background job processing
+- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
+- ✅ **NEW**: Multiple named queues with fallback support
+- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
+- ✅ **NEW**: Configurable timeout per listener
+- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
+- ✅ **NEW**: Mix queued and non-queued listeners
+- ✅ Comprehensive test coverage for queue functionality
+- ✅ Example demonstrating queue features
+
+### Listener Properties Added
+
+- `bool get queued` - Enable background queue processing
+- `String? get queue` - Specify target queue name
+- `Duration get timeout` - Job timeout duration (default: 60s)
+- `int get retries` - Retry count on failure (default: 3, max: 30)
+
+### Usage
+
+```dart
+void setupEvents() {
+  // Setup queues
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+  
+  MayrEvents.on<OrderEvent>(ProcessOrderListener());
+}
+
+class ProcessOrderListener extends MayrListener<OrderEvent> {
+  @override
+  bool get queued => true;
+  
+  @override
+  String get queue => 'orders';
+  
+  @override
+  int get retries => 5;
+  
+  @override
+  Future<void> handle(OrderEvent event) async {
+    // Process in background with automatic retry
+  }
+}
+```
+
+---
+
+## 2.0.0
+
+### 🎉 Complete API Redesign - Functional Approach
+
+- **BREAKING**: Removed class extension pattern - now uses functional API
+- **BREAKING**: `MayrEventSetup` completely removed
+- **BREAKING**: No more `MayrEvents.instance` - use static methods directly
+- **BREAKING**: Pure Dart package (Flutter removed from tests/examples)
+- ✅ **NEW**: Event-level hooks (`beforeHandle`, `shouldHandle`, `onError`)
+- ✅ **NEW**: Keyed handler system for better management
+- ✅ **NEW**: `shouldHandle` callbacks for validation
+- ✅ **NEW**: Handler removal methods (`removeBeforeHandler`, etc.)
+- ✅ Simplified setup with function-based pattern
+- ✅ No class extension or boilerplate needed
+- ✅ Pure Dart - works in any Dart project
+
+### New API Pattern
+
+**Setup:**
+```dart
+void setupEvents() {
+  MayrEvents.on<UserEvent>(UserListener());
+  MayrEvents.beforeHandle('logger', (event, listener) async { });
+  MayrEvents.shouldHandle('validator', (event) => true);
+}
+```
+
+**Usage:**
+```dart
+void main() {
+  setupEvents();
+}
+
+await MayrEvents.fire(UserEvent());
+```
+
+### Updated
+
+- Complete rewrite of `MayrEvents` class
+- `MayrEvent` base class now supports optional hooks
+- Example converted to pure Dart console app
+- All tests updated to use `package:test`
+- Documentation completely rewritten
+- Repository: https://github.com/MayR-Labs/dart_events
+
+---
+
 ## 1.0.0
 
 - 🎉 First stable release
