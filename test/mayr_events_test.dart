@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 import 'package:mayr_events/mayr_events.dart';
 
 // Test events
@@ -76,49 +76,9 @@ class AnalyticsListener extends MayrListener<OrderPlacedEvent> {
   }
 }
 
-// Test setup
-class TestEvents extends MayrEvents {
-  final List<String> beforeHandleLogs = [];
-  final List<String> errorLogs = [];
-
-  final WelcomeEmailListener welcomeListener = WelcomeEmailListener();
-  final AnalyticsListener analyticsListener = AnalyticsListener();
-
-  @override
-  void registerListeners() {
-    on<UserRegisteredEvent>(welcomeListener);
-    on<OrderPlacedEvent>(analyticsListener);
-  }
-
-  @override
-  Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {
-    beforeHandleLogs.add('${listener.runtimeType}->${event.runtimeType}');
-  }
-
-  @override
-  Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {
-    errorLogs.add('${event.runtimeType}:$error');
-  }
-
-  // Helper method to set beforeHandle dynamically for testing
-  void setBeforeHandle(Future<void> Function(MayrEvent, MayrListener)? handler) {
-    _beforeHandle = handler;
-  }
-
-  // Helper method to set onError dynamically for testing
-  void setOnError(Future<void> Function(MayrEvent, Object, StackTrace)? handler) {
-    _onError = handler;
-  }
-
-  // Helper to get the test instance
-  static TestEvents get testInstance => _globalInstance as TestEvents;
-}
-
 void main() {
-  // Reset the event bus before each test
   setUp(() {
-    TestEvents(); // Create new instance
-    TestEvents.testInstance.clear();
+    MayrEvents.clear();
   });
 
   group('MayrEvent', () {
@@ -155,7 +115,7 @@ void main() {
   group('MayrEvents', () {
     test('can register and fire events', () async {
       final listener = TestListener();
-      TestEvents.testInstance.on<TestEvent>(listener);
+      MayrEvents.on<TestEvent>(listener);
 
       await MayrEvents.fire(const TestEvent('hello'));
 
@@ -166,8 +126,8 @@ void main() {
       final listener1 = TestListener();
       final listener2 = TestListener();
 
-      TestEvents.testInstance.on<TestEvent>(listener1);
-      TestEvents.testInstance.on<TestEvent>(listener2);
+      MayrEvents.on<TestEvent>(listener1);
+      MayrEvents.on<TestEvent>(listener2);
 
       await MayrEvents.fire(const TestEvent('broadcast'));
 
@@ -179,8 +139,8 @@ void main() {
       final testListener = TestListener();
       final userListener = WelcomeEmailListener();
 
-      TestEvents.testInstance.on<TestEvent>(testListener);
-      TestEvents.testInstance.on<UserRegisteredEvent>(userListener);
+      MayrEvents.on<TestEvent>(testListener);
+      MayrEvents.on<UserRegisteredEvent>(userListener);
 
       await MayrEvents.fire(const TestEvent('test'));
       await MayrEvents.fire(
@@ -193,7 +153,7 @@ void main() {
 
     test('supports once-only listeners', () async {
       final listener = OnceListener();
-      TestEvents.testInstance.on<TestEvent>(listener);
+      MayrEvents.on<TestEvent>(listener);
 
       await MayrEvents.fire(const TestEvent('first'));
       await MayrEvents.fire(const TestEvent('second'));
@@ -205,13 +165,11 @@ void main() {
       final errorListener = ErrorThrowingListener();
       final normalListener = TestListener();
 
-      TestEvents.testInstance.on<TestEvent>(errorListener);
-      TestEvents.testInstance.on<TestEvent>(normalListener);
+      MayrEvents.on<TestEvent>(errorListener);
+      MayrEvents.on<TestEvent>(normalListener);
 
-      // Should not throw despite error listener
       await MayrEvents.fire(const TestEvent('test'));
 
-      // Normal listener should still execute
       expect(normalListener.messages, ['test']);
     });
 
@@ -219,8 +177,8 @@ void main() {
       final listener = TestListener();
       final List<String> logs = [];
 
-      TestEvents.testInstance.on<TestEvent>(listener);
-      TestEvents.testInstance.setBeforeHandle((event, listener) async {
+      MayrEvents.on<TestEvent>(listener);
+      MayrEvents.beforeHandle('test', (event, listener) async {
         logs.add('${listener.runtimeType}->${event.runtimeType}');
       });
 
@@ -234,8 +192,8 @@ void main() {
       final listener = ErrorThrowingListener();
       final List<String> errorLogs = [];
 
-      TestEvents.testInstance.on<TestEvent>(listener);
-      TestEvents.testInstance.setOnError((event, error, stack) async {
+      MayrEvents.on<TestEvent>(listener);
+      MayrEvents.onError('test', (event, error, stack) async {
         errorLogs.add('${event.runtimeType}:${error.toString()}');
       });
 
@@ -246,30 +204,54 @@ void main() {
       expect(errorLogs[0], contains('Test error'));
     });
 
+    test('supports shouldHandle callbacks', () async {
+      final listener = TestListener();
+      
+      MayrEvents.on<TestEvent>(listener);
+      MayrEvents.shouldHandle('validator', (event) {
+        return event is TestEvent && event.message != 'skip';
+      });
+
+      await MayrEvents.fire(const TestEvent('process'));
+      await MayrEvents.fire(const TestEvent('skip'));
+
+      expect(listener.messages, ['process']);
+    });
+
+    test('can remove handlers', () async {
+      final listener = TestListener();
+      final List<String> logs = [];
+
+      MayrEvents.on<TestEvent>(listener);
+      MayrEvents.beforeHandle('test', (event, listener) async {
+        logs.add('logged');
+      });
+
+      await MayrEvents.fire(const TestEvent('first'));
+      
+      MayrEvents.removeBeforeHandler('test');
+      
+      await MayrEvents.fire(const TestEvent('second'));
+
+      expect(logs, ['logged']);
+      expect(listener.messages, ['first', 'second']);
+    });
+
     test('supports async listeners', () async {
       final listener = AsyncListener();
-      TestEvents.testInstance.on<TestEvent>(listener);
+      MayrEvents.on<TestEvent>(listener);
 
       await MayrEvents.fire(const TestEvent('async test'));
 
       expect(listener.messages, ['async test']);
     });
 
-    test('can use static on() method', () async {
-      final listener = TestListener();
-      TestEvents.testInstance.on<TestEvent>(listener);
-
-      await MayrEvents.fire(const TestEvent('via static'));
-
-      expect(listener.messages, ['via static']);
-    });
-
     test('can remove specific listener', () async {
       final listener = TestListener();
-      TestEvents.testInstance.on<TestEvent>(listener);
+      MayrEvents.on<TestEvent>(listener);
 
       await MayrEvents.fire(const TestEvent('first'));
-      TestEvents.testInstance.remove<TestEvent>(listener);
+      MayrEvents.remove<TestEvent>(listener);
       await MayrEvents.fire(const TestEvent('second'));
 
       expect(listener.messages, ['first']);
@@ -279,11 +261,11 @@ void main() {
       final listener1 = TestListener();
       final listener2 = TestListener();
 
-      TestEvents.testInstance.on<TestEvent>(listener1);
-      TestEvents.testInstance.on<TestEvent>(listener2);
+      MayrEvents.on<TestEvent>(listener1);
+      MayrEvents.on<TestEvent>(listener2);
 
       await MayrEvents.fire(const TestEvent('first'));
-      TestEvents.testInstance.removeAll<TestEvent>();
+      MayrEvents.removeAll<TestEvent>();
       await MayrEvents.fire(const TestEvent('second'));
 
       expect(listener1.messages, ['first']);
@@ -294,10 +276,10 @@ void main() {
       final testListener = TestListener();
       final userListener = WelcomeEmailListener();
 
-      TestEvents.testInstance.on<TestEvent>(testListener);
-      TestEvents.testInstance.on<UserRegisteredEvent>(userListener);
+      MayrEvents.on<TestEvent>(testListener);
+      MayrEvents.on<UserRegisteredEvent>(userListener);
 
-      TestEvents.testInstance.clear();
+      MayrEvents.clear();
 
       await MayrEvents.fire(const TestEvent('test'));
       await MayrEvents.fire(
@@ -312,45 +294,49 @@ void main() {
       final listener1 = TestListener();
       final listener2 = TestListener();
 
-      expect(TestEvents.testInstance.listenerCount<TestEvent>(), 0);
+      expect(MayrEvents.listenerCount<TestEvent>(), 0);
 
-      TestEvents.testInstance.on<TestEvent>(listener1);
-      expect(TestEvents.testInstance.listenerCount<TestEvent>(), 1);
+      MayrEvents.on<TestEvent>(listener1);
+      expect(MayrEvents.listenerCount<TestEvent>(), 1);
 
-      TestEvents.testInstance.on<TestEvent>(listener2);
-      expect(TestEvents.testInstance.listenerCount<TestEvent>(), 2);
+      MayrEvents.on<TestEvent>(listener2);
+      expect(MayrEvents.listenerCount<TestEvent>(), 2);
 
-      TestEvents.testInstance.remove<TestEvent>(listener1);
-      expect(TestEvents.testInstance.listenerCount<TestEvent>(), 1);
+      MayrEvents.remove<TestEvent>(listener1);
+      expect(MayrEvents.listenerCount<TestEvent>(), 1);
     });
 
     test('can check if listeners exist', () {
-      expect(TestEvents.testInstance.hasListeners<TestEvent>(), false);
+      expect(MayrEvents.hasListeners<TestEvent>(), false);
 
-      TestEvents.testInstance.on<TestEvent>(TestListener());
-      expect(TestEvents.testInstance.hasListeners<TestEvent>(), true);
+      MayrEvents.on<TestEvent>(TestListener());
+      expect(MayrEvents.hasListeners<TestEvent>(), true);
 
-      TestEvents.testInstance.removeAll<TestEvent>();
-      expect(TestEvents.testInstance.hasListeners<TestEvent>(), false);
+      MayrEvents.removeAll<TestEvent>();
+      expect(MayrEvents.hasListeners<TestEvent>(), false);
     });
   });
 
   group('Integration tests', () {
     test('complete workflow with multiple events and listeners', () async {
-      // Fire multiple events
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u1', 'alice@test.com'),
-      );
+      final welcomeListener = WelcomeEmailListener();
+      final analyticsListener = AnalyticsListener();
+      final List<String> beforeHandleLogs = [];
+
+      MayrEvents.on<UserRegisteredEvent>(welcomeListener);
+      MayrEvents.on<OrderPlacedEvent>(analyticsListener);
+      MayrEvents.beforeHandle('logger', (event, listener) async {
+        beforeHandleLogs.add('${listener.runtimeType}->${event.runtimeType}');
+      });
+
+      await MayrEvents.fire(const UserRegisteredEvent('u1', 'alice@test.com'));
       await MayrEvents.fire(const OrderPlacedEvent('o1', 49.99));
-      await MayrEvents.fire(
-        const UserRegisteredEvent('u2', 'bob@test.com'),
-      );
+      await MayrEvents.fire(const UserRegisteredEvent('u2', 'bob@test.com'));
       await MayrEvents.fire(const OrderPlacedEvent('o2', 149.99));
 
-      // Check results
-      expect(TestEvents.testInstance.welcomeListener.sentTo, ['alice@test.com', 'bob@test.com']);
-      expect(TestEvents.testInstance.analyticsListener.totals, [49.99, 149.99]);
-      expect(TestEvents.testInstance.beforeHandleLogs.length, 4);
+      expect(welcomeListener.sentTo, ['alice@test.com', 'bob@test.com']);
+      expect(analyticsListener.totals, [49.99, 149.99]);
+      expect(beforeHandleLogs.length, 4);
     });
 
     test('mixed listener types work together', () async {
@@ -358,9 +344,9 @@ void main() {
       final onceListener = OnceListener();
       final asyncListener = AsyncListener();
 
-      TestEvents.testInstance.on<TestEvent>(normalListener);
-      TestEvents.testInstance.on<TestEvent>(onceListener);
-      TestEvents.testInstance.on<TestEvent>(asyncListener);
+      MayrEvents.on<TestEvent>(normalListener);
+      MayrEvents.on<TestEvent>(onceListener);
+      MayrEvents.on<TestEvent>(asyncListener);
 
       await MayrEvents.fire(const TestEvent('first'));
       await MayrEvents.fire(const TestEvent('second'));

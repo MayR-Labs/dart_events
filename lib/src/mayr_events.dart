@@ -4,150 +4,211 @@ import 'dart:isolate';
 import 'mayr_event.dart';
 import 'mayr_listener.dart';
 
-/// Global singleton instance of the events system.
-MayrEvents? _globalInstance;
-
-/// Base class for application event systems.
+/// Global event bus for the Mayr Events system.
 ///
-/// Extend this class to create your own event system. Create a singleton
-/// instance and the system will automatically initialize on first use.
+/// This class provides static methods for registering listeners and firing events.
+/// Users don't need to extend any class, just use the static methods directly.
 ///
 /// ## Usage
 ///
 /// ```dart
-/// class MyEvents extends MayrEvents {
-///   @override
-///   void registerListeners() {
-///     on<UserRegisteredEvent>(SendWelcomeEmailListener());
-///   }
+/// void setupEvents() {
+///   MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
+///   MayrEvents.beforeHandle('logger', (event, listener) async {
+///     print('Handling ${event.runtimeType}');
+///   });
 /// }
 ///
-/// // Set up your events class (typically in main or before first use)
-/// final events = MyEvents();
+/// void main() {
+///   setupEvents();
+///   runApp(MyApp());
+/// }
 ///
-/// // Fire events using the static method
-/// await MayrEvents.fire(UserRegisteredEvent('user@example.com'));
+/// // Fire events anywhere
+/// await MayrEvents.fire(UserRegisteredEvent('user123', 'user@example.com'));
 /// ```
-abstract class MayrEvents {
-  /// Creates a MayrEvents instance and sets it as the global instance.
-  MayrEvents() {
-    _globalInstance = this;
-  }
+class MayrEvents {
+  MayrEvents._();
+
+  /// Singleton instance
+  static final MayrEvents _instance = MayrEvents._();
 
   /// Map of event types to their registered listeners.
   final Map<Type, List<MayrListener>> _listeners = {};
 
-  /// Callback to run before each listener handles an event.
-  Future<void> Function(MayrEvent event, MayrListener listener)? _beforeHandle;
+  /// Map of keyed callbacks to run before each listener handles an event.
+  final Map<String, Future<void> Function(MayrEvent, MayrListener)>
+      _beforeHandlers = {};
 
-  /// Global error handler for listener failures.
-  Future<void> Function(MayrEvent event, Object error, StackTrace stack)?
-      _onError;
+  /// Map of keyed callbacks for error handling.
+  final Map<String, Future<void> Function(MayrEvent, Object, StackTrace)>
+      _errorHandlers = {};
 
-  /// Whether this instance has been initialized.
-  bool _initialized = false;
+  /// Map of keyed callbacks that determine if a listener should handle an event.
+  final Map<String, bool Function(MayrEvent)> _shouldHandlers = {};
+
+  /// Registers a listener for a specific event type.
+  ///
+  /// ```dart
+  /// MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
+  /// ```
+  static void on<T extends MayrEvent>(MayrListener<T> listener) {
+    _instance._listeners.putIfAbsent(T, () => []).add(listener);
+  }
+
+  /// Adds a beforeHandle callback with a key.
+  ///
+  /// The callback will be executed before each listener handles an event.
+  ///
+  /// ```dart
+  /// MayrEvents.beforeHandle('logger', (event, listener) async {
+  ///   print('Handling ${event.runtimeType} with ${listener.runtimeType}');
+  /// });
+  /// ```
+  static void beforeHandle(
+    String key,
+    Future<void> Function(MayrEvent event, MayrListener listener) callback,
+  ) {
+    _instance._beforeHandlers[key] = callback;
+  }
+
+  /// Adds an error handler callback with a key.
+  ///
+  /// The callback will be executed when a listener throws an error.
+  ///
+  /// ```dart
+  /// MayrEvents.onError('logger', (event, error, stack) async {
+  ///   print('Error: $error');
+  /// });
+  /// ```
+  static void onError(
+    String key,
+    Future<void> Function(MayrEvent event, Object error, StackTrace stack)
+        callback,
+  ) {
+    _instance._errorHandlers[key] = callback;
+  }
+
+  /// Adds a shouldHandle callback with a key.
+  ///
+  /// The callback receives an event and returns whether listeners should handle it.
+  /// If any shouldHandle returns false, the listener will not run.
+  ///
+  /// ```dart
+  /// MayrEvents.shouldHandle('validator', (event) {
+  ///   return event is UserRegisteredEvent && event.userId.isNotEmpty;
+  /// });
+  /// ```
+  static void shouldHandle(
+    String key,
+    bool Function(MayrEvent event) callback,
+  ) {
+    _instance._shouldHandlers[key] = callback;
+  }
+
+  /// Removes a beforeHandle callback by key.
+  static void removeBeforeHandler(String key) {
+    _instance._beforeHandlers.remove(key);
+  }
+
+  /// Removes an error handler callback by key.
+  static void removeErrorHandler(String key) {
+    _instance._errorHandlers.remove(key);
+  }
+
+  /// Removes a shouldHandle callback by key.
+  static void removeShouldHandle(String key) {
+    _instance._shouldHandlers.remove(key);
+  }
 
   /// Fires an event to all registered listeners.
   ///
-  /// This static method automatically initializes the event system on first use.
-  ///
   /// ```dart
-  /// await MayrEvents.fire(UserRegisteredEvent('user@example.com'));
+  /// await MayrEvents.fire(UserRegisteredEvent('user123', 'user@example.com'));
   /// ```
   static Future<void> fire<T extends MayrEvent>(T event) async {
-    if (_globalInstance == null) {
-      throw StateError(
-        'No MayrEvents instance has been created. '
-        'Please create an instance of your MayrEvents subclass first.',
-      );
-    }
-
-    if (!_globalInstance!._initialized) {
-      _globalInstance!._init();
-    }
-
-    await _globalInstance!._fireEvent(event);
-  }
-
-  /// Internal initialization method.
-  void _init() {
-    if (_initialized) return;
-    registerListeners();
-    _beforeHandle = beforeHandle;
-    _onError = onError;
-    _initialized = true;
-  }
-
-  /// Register all event-listener bindings.
-  ///
-  /// Override this method to register your listeners.
-  void registerListeners();
-
-  /// Hook that runs before every listener handles an event.
-  ///
-  /// Override this to add custom logic before event handling.
-  Future<void> beforeHandle(MayrEvent event, MayrListener listener) async {}
-
-  /// Global error handler for listener failures.
-  ///
-  /// Override this to handle errors from listeners.
-  Future<void> onError(MayrEvent event, Object error, StackTrace stack) async {}
-
-  /// Registers a listener for a specific event type.
-  void on<T extends MayrEvent>(MayrListener<T> listener) {
-    _listeners.putIfAbsent(T, () => []).add(listener);
-  }
-
-  /// Internal event firing implementation.
-  Future<void> _fireEvent<T extends MayrEvent>(T event) async {
-    final listeners = _listeners[T] ?? [];
+    final listeners = _instance._listeners[T] ?? [];
 
     for (final listener in List<MayrListener>.of(listeners)) {
-      if (_beforeHandle != null) {
-        await _beforeHandle!(event, listener);
+      // Check event-level shouldHandle if it exists
+      if (event.shouldHandle != null && !event.shouldHandle!(event)) {
+        continue;
+      }
+
+      // Check global shouldHandle callbacks
+      bool shouldRun = true;
+      for (final callback in _instance._shouldHandlers.values) {
+        if (!callback(event)) {
+          shouldRun = false;
+          break;
+        }
+      }
+
+      if (!shouldRun) {
+        continue;
+      }
+
+      // Run event-level beforeHandle if it exists
+      if (event.beforeHandle != null) {
+        await event.beforeHandle!(event, listener);
+      }
+
+      // Run global beforeHandle callbacks
+      for (final callback in _instance._beforeHandlers.values) {
+        await callback(event, listener);
       }
 
       try {
+        // Execute listener in isolate or main thread
         if (listener.runInIsolate) {
           await Isolate.run(() => listener.handle(event));
         } else {
           await listener.handle(event);
         }
 
+        // Remove once-only listeners after successful execution
         if (listener.once) {
-          _listeners[T]?.remove(listener);
+          _instance._listeners[T]?.remove(listener);
         }
       } catch (e, s) {
-        if (_onError != null) {
-          await _onError!(event, e, s);
+        // Run event-level error handler if it exists
+        if (event.onError != null) {
+          await event.onError!(event, e, s);
+        }
+
+        // Run global error handlers
+        for (final callback in _instance._errorHandlers.values) {
+          await callback(event, e, s);
         }
       }
     }
   }
 
   /// Removes a specific listener for an event type.
-  void remove<T extends MayrEvent>(MayrListener<T> listener) {
-    _listeners[T]?.remove(listener);
+  static void remove<T extends MayrEvent>(MayrListener<T> listener) {
+    _instance._listeners[T]?.remove(listener);
   }
 
   /// Removes all listeners for a specific event type.
-  void removeAll<T extends MayrEvent>() {
-    _listeners.remove(T);
+  static void removeAll<T extends MayrEvent>() {
+    _instance._listeners.remove(T);
   }
 
-  /// Clears all registered listeners.
-  void clear() {
-    _listeners.clear();
-    _initialized = false;
+  /// Clears all registered listeners and handlers.
+  static void clear() {
+    _instance._listeners.clear();
+    _instance._beforeHandlers.clear();
+    _instance._errorHandlers.clear();
+    _instance._shouldHandlers.clear();
   }
 
   /// Returns the number of listeners registered for an event type.
-  int listenerCount<T extends MayrEvent>() {
-    return _listeners[T]?.length ?? 0;
+  static int listenerCount<T extends MayrEvent>() {
+    return _instance._listeners[T]?.length ?? 0;
   }
 
   /// Returns whether any listeners are registered for an event type.
-  bool hasListeners<T extends MayrEvent>() {
-    return (_listeners[T]?.isNotEmpty ?? false);
+  static bool hasListeners<T extends MayrEvent>() {
+    return (_instance._listeners[T]?.isNotEmpty ?? false);
   }
 }
