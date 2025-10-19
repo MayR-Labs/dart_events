@@ -129,7 +129,7 @@ class RegisterScreen extends StatelessWidget {
     final userId = 'user_${DateTime.now().millisecondsSinceEpoch}';
     
     // Fire the event
-    await MayrEvents.instance.fire(
+    await MayrEvents.fire(
       UserRegisteredEvent(userId, email),
     );
     
