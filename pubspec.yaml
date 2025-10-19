@@ -10,7 +10,7 @@ LICENSE: MIT
 environment:
   sdk: ^3.9.2
 
-dependencies:
+# dependencies:
 
 dev_dependencies:
   test: ^1.25.0
@@ -22,4 +22,3 @@ topics:
   - architecture
   - dart
   - event-bus
-  - pub
