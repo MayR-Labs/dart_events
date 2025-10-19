@@ -14,7 +14,7 @@ dependencies:
 Then run:
 
 ```bash
-flutter pub get
+dart pub get
 ```
 
 ## 5-Minute Tutorial

@@ -1,32 +1,25 @@
 name: mayr_events
-description: "A lightweight, expressive event and listener system for Flutter and Dart, inspired by Laravel's event architecture."
+description: "A lightweight, expressive event and listener system for Dart, inspired by Laravel's event architecture."
 version: 1.0.0
-homepage: https://github.com/YoungMayor/mayr_flutter_events
-repository: https://github.com/YoungMayor/mayr_flutter_events
-issue_tracker: https://github.com/YoungMayor/mayr_flutter_events/issues
-documentation: https://github.com/YoungMayor/mayr_flutter_events/wiki
+homepage: https://github.com/MayR-Labs/dart_events
+repository: https://github.com/MayR-Labs/dart_events
+issue_tracker: https://github.com/MayR-Labs/dart_events/issues
+documentation: https://github.com/MayR-Labs/dart_events/wiki
 LICENSE: MIT
 
 environment:
   sdk: ^3.9.2
-  flutter: ">=1.17.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^5.0.0
-
-# flutter:
-#   assets:
-#     - assets/
+  test: ^1.25.0
+  lints: ^5.0.0
 
 topics:
-  - flutter
   - event
   - listener
   - architecture
   - dart
+  - event-bus
+  - pub
