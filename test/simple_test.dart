@@ -68,7 +68,7 @@ void main() async {
   Future<void> test(String name, Future<void> Function() testFn) async {
     try {
       // Reset before each test
-      MayrEvents.instance.clear();
+      MayrEvents.clear();
 
       await testFn();
       print('✅ $name');
@@ -84,8 +84,8 @@ void main() async {
   // Test 1: Basic event firing
   await test('Basic event firing', () async {
     final listener = TestListener();
-    MayrEvents.instance.listen<TestEvent>(listener);
-    await MayrEvents.instance.fire(const TestEvent('hello'));
+    MayrEvents.listen<TestEvent>(listener);
+    await MayrEvents.fire(const TestEvent('hello'));
 
     if (listener.messages.length != 1) {
       throw Exception('Expected 1 message, got ${listener.messages.length}');
@@ -100,10 +100,10 @@ void main() async {
     final listener1 = TestListener();
     final listener2 = TestListener();
 
-    MayrEvents.instance.listen<TestEvent>(listener1);
-    MayrEvents.instance.listen<TestEvent>(listener2);
+    MayrEvents.listen<TestEvent>(listener1);
+    MayrEvents.listen<TestEvent>(listener2);
 
-    await MayrEvents.instance.fire(const TestEvent('broadcast'));
+    await MayrEvents.fire(const TestEvent('broadcast'));
 
     if (listener1.messages.length != 1 || listener2.messages.length != 1) {
       throw Exception('Both listeners should have received the event');
@@ -113,10 +113,10 @@ void main() async {
   // Test 3: Once-only listeners
   await test('Once-only listeners', () async {
     final listener = OnceListener();
-    MayrEvents.instance.listen<TestEvent>(listener);
+    MayrEvents.listen<TestEvent>(listener);
 
-    await MayrEvents.instance.fire(const TestEvent('first'));
-    await MayrEvents.instance.fire(const TestEvent('second'));
+    await MayrEvents.fire(const TestEvent('first'));
+    await MayrEvents.fire(const TestEvent('second'));
 
     if (listener.callCount != 1) {
       throw Exception('Expected 1 call, got ${listener.callCount}');
@@ -128,7 +128,7 @@ void main() async {
     final listener = TestListener();
     MayrEvents.on<TestEvent>(listener);
 
-    await MayrEvents.instance.fire(const TestEvent('via static'));
+    await MayrEvents.fire(const TestEvent('via static'));
 
     if (listener.messages.length != 1) {
       throw Exception('Listener should have received the event');
@@ -141,8 +141,8 @@ void main() async {
     await setup.init();
 
     // Fire multiple events
-    await MayrEvents.instance.fire(const CounterEvent());
-    await MayrEvents.instance.fire(const CounterEvent());
+    await MayrEvents.fire(const CounterEvent());
+    await MayrEvents.fire(const CounterEvent());
 
     if (setup.logs.length != 2) {
       throw Exception('Expected 2 log entries, got ${setup.logs.length}');
@@ -154,52 +154,52 @@ void main() async {
     final listener1 = TestListener();
     final listener2 = TestListener();
 
-    if (MayrEvents.instance.listenerCount<TestEvent>() != 0) {
+    if (MayrEvents.listenerCount<TestEvent>() != 0) {
       throw Exception('Should start with 0 listeners');
     }
 
-    MayrEvents.instance.listen<TestEvent>(listener1);
-    if (MayrEvents.instance.listenerCount<TestEvent>() != 1) {
+    MayrEvents.listen<TestEvent>(listener1);
+    if (MayrEvents.listenerCount<TestEvent>() != 1) {
       throw Exception('Should have 1 listener');
     }
 
-    MayrEvents.instance.listen<TestEvent>(listener2);
-    if (MayrEvents.instance.listenerCount<TestEvent>() != 2) {
+    MayrEvents.listen<TestEvent>(listener2);
+    if (MayrEvents.listenerCount<TestEvent>() != 2) {
       throw Exception('Should have 2 listeners');
     }
 
-    MayrEvents.instance.remove<TestEvent>(listener1);
-    if (MayrEvents.instance.listenerCount<TestEvent>() != 1) {
+    MayrEvents.remove<TestEvent>(listener1);
+    if (MayrEvents.listenerCount<TestEvent>() != 1) {
       throw Exception('Should have 1 listener after removal');
     }
   });
 
   // Test 7: Has listeners check
   await test('Has listeners check', () async {
-    if (MayrEvents.instance.hasListeners<TestEvent>()) {
+    if (MayrEvents.hasListeners<TestEvent>()) {
       throw Exception('Should not have listeners initially');
     }
 
-    MayrEvents.instance.listen<TestEvent>(TestListener());
-    if (!MayrEvents.instance.hasListeners<TestEvent>()) {
+    MayrEvents.listen<TestEvent>(TestListener());
+    if (!MayrEvents.hasListeners<TestEvent>()) {
       throw Exception('Should have listeners after registration');
     }
 
-    MayrEvents.instance.removeAll<TestEvent>();
-    if (MayrEvents.instance.hasListeners<TestEvent>()) {
+    MayrEvents.removeAll<TestEvent>();
+    if (MayrEvents.hasListeners<TestEvent>()) {
       throw Exception('Should not have listeners after removeAll');
     }
   });
 
   // Test 8: Clear all listeners
   await test('Clear all listeners', () async {
-    MayrEvents.instance.listen<TestEvent>(TestListener());
-    MayrEvents.instance.listen<CounterEvent>(CounterListener());
+    MayrEvents.listen<TestEvent>(TestListener());
+    MayrEvents.listen<CounterEvent>(CounterListener());
 
-    MayrEvents.instance.clear();
+    MayrEvents.clear();
 
-    if (MayrEvents.instance.hasListeners<TestEvent>() ||
-        MayrEvents.instance.hasListeners<CounterEvent>()) {
+    if (MayrEvents.hasListeners<TestEvent>() ||
+        MayrEvents.hasListeners<CounterEvent>()) {
       throw Exception('All listeners should be cleared');
     }
   });
@@ -214,9 +214,9 @@ void main() async {
 
     // Create a listener that throws an error
     final errorListener = _ErrorListener();
-    MayrEvents.instance.listen<TestEvent>(errorListener);
+    MayrEvents.listen<TestEvent>(errorListener);
 
-    await MayrEvents.instance.fire(const TestEvent('test'));
+    await MayrEvents.fire(const TestEvent('test'));
 
     if (errorLogs.isEmpty) {
       throw Exception('Error should have been logged');
@@ -232,9 +232,9 @@ void main() async {
     };
 
     final listener = TestListener();
-    MayrEvents.instance.listen<TestEvent>(listener);
+    MayrEvents.listen<TestEvent>(listener);
 
-    await MayrEvents.instance.fire(const TestEvent('test'));
+    await MayrEvents.fire(const TestEvent('test'));
 
     if (logs.length != 1) {
       throw Exception('beforeHandle should have been called once');

@@ -5,7 +5,7 @@ Overview of the mayr_events package structure and organization.
 ## Directory Layout
 
 ```
-mayr_flutter_events/
+dart_events/
 ├── lib/                        # Source code
 │   ├── src/                    # Implementation files
 │   │   ├── mayr_event.dart           # Base event class

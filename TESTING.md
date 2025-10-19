@@ -47,7 +47,7 @@ Use the provided test script:
 
 ## Test Structure
 
-The test suite (`test/mayr_flutter_events_test.dart`) includes:
+The test suite (`test/mayr_events_test.dart`) includes:
 
 - **Unit tests** for each component:
   - MayrEvent

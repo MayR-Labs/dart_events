@@ -167,14 +167,14 @@ Access the singleton instance of the event bus.
 Registers a listener for a specific event type.
 
 ```dart
-MayrEvents.instance.listen<UserRegisteredEvent>(
+MayrEvents.listen<UserRegisteredEvent>(
   SendWelcomeEmailListener(),
 );
 ```
 
 #### `on<T>(MayrListener<T> listener)` (static)
 
-Shorthand for `instance.listen()`.
+Shorthand for `listen()`.
 
 ```dart
 MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
@@ -185,7 +185,7 @@ MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
 Fires an event to all registered listeners.
 
 ```dart
-await MayrEvents.instance.fire(
+await MayrEvents.fire(
   UserRegisteredEvent('user123', 'user@example.com'),
 );
 ```
@@ -204,7 +204,7 @@ final listener = MyListener();
 MayrEvents.on<MyEvent>(listener);
 
 // Later...
-MayrEvents.instance.remove<MyEvent>(listener);
+MayrEvents.remove<MyEvent>(listener);
 ```
 
 #### `removeAll<T>()`
@@ -212,7 +212,7 @@ MayrEvents.instance.remove<MyEvent>(listener);
 Removes all listeners for an event type.
 
 ```dart
-MayrEvents.instance.removeAll<UserRegisteredEvent>();
+MayrEvents.removeAll<UserRegisteredEvent>();
 ```
 
 #### `clear()`
@@ -220,7 +220,7 @@ MayrEvents.instance.removeAll<UserRegisteredEvent>();
 Removes all listeners for all event types.
 
 ```dart
-MayrEvents.instance.clear();
+MayrEvents.clear();
 ```
 
 Useful for:
@@ -233,7 +233,7 @@ Useful for:
 Returns the number of listeners for an event type.
 
 ```dart
-final count = MayrEvents.instance.listenerCount<UserRegisteredEvent>();
+final count = MayrEvents.listenerCount<UserRegisteredEvent>();
 print('$count listeners registered');
 ```
 
@@ -242,7 +242,7 @@ print('$count listeners registered');
 Checks if any listeners are registered for an event type.
 
 ```dart
-if (MayrEvents.instance.hasListeners<UserRegisteredEvent>()) {
+if (MayrEvents.hasListeners<UserRegisteredEvent>()) {
   print('Listeners are registered');
 }
 ```
@@ -509,7 +509,7 @@ class MyAppEvents extends MayrEventSetup {
 1. **Clear event bus before each test**
    ```dart
    setUp(() {
-     MayrEvents.instance.clear();
+     MayrEvents.clear();
    });
    ```
 
@@ -532,7 +532,7 @@ class MyAppEvents extends MayrEventSetup {
      MayrEvents.on<TestEvent>(listener1);
      MayrEvents.on<TestEvent>(listener2);
      
-     await MayrEvents.instance.fire(TestEvent('test'));
+     await MayrEvents.fire(TestEvent('test'));
      
      expect(listener1.called, true);
      expect(listener2.called, true);
