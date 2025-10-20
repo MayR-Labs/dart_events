@@ -1,7 +1,7 @@
 import 'package:mayr_events/mayr_events.dart';
 
 /// Example demonstrating the runtime type bug fix
-/// 
+///
 /// Before the fix, when an event was returned from a method with
 /// MayrEvent as the return type, it wouldn't dispatch correctly.
 /// Now it uses event.runtimeType instead of the generic type T.
@@ -58,35 +58,29 @@ void main() async {
   print('1. Testing Runtime Type Fix (Debug Mode Enabled)');
   print('-' * 60);
   MayrEvents.debugMode(true);
-  
+
   // These events have static type MayrEvent due to getEventByKey's return type
   // Before the fix, they would NOT dispatch to the correct listeners
   // After the fix, they dispatch correctly using event.runtimeType
   final event1 = getEventByKey('user_registered');
   final event2 = getEventByKey('order_placed');
-  
+
   print('Event 1 static type: MayrEvent, runtime type: ${event1.runtimeType}');
   print('Event 2 static type: MayrEvent, runtime type: ${event2.runtimeType}');
   print('');
-  
+
   await MayrEvents.fire(event1);
   await MayrEvents.fire(event2);
-  
+
   print('');
   print('2. Testing Debug Mode Disabled');
   print('-' * 60);
   MayrEvents.debugMode(false);
   print('(No debug output should appear below)');
-  await MayrEvents.fire(const UserRegisteredEvent('user789', 'test@example.com'));
-  
-  print('');
-  print('3. Testing Custom Debug Messages');
-  print('-' * 60);
-  MayrEvents.debugMode(true);
-  MayrEvents.debugPrint('Starting batch processing...');
-  await MayrEvents.fire(const OrderPlacedEvent('order999', 149.99));
-  MayrEvents.debugPrint('Batch processing completed!');
-  
+  await MayrEvents.fire(
+    const UserRegisteredEvent('user789', 'test@example.com'),
+  );
+
   print('');
   print('=' * 60);
   print('✅ All tests passed! The runtime type bug is fixed!');

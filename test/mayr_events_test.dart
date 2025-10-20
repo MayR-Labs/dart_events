@@ -402,21 +402,5 @@ void main() {
       // Test passes if no errors occur
       expect(testListener.messages, ['test1', 'test2']);
     });
-
-    test('debugPrint only prints when debug mode is enabled', () {
-      // This test verifies the debugPrint method exists and can be called
-      // We can't easily capture print output in tests, but we can verify it doesn't crash
-      MayrEvents.debugMode(true);
-      MayrEvents.debugPrint('Test message with debug enabled');
-
-      MayrEvents.debugMode(false);
-      MayrEvents.debugPrint('Test message with debug disabled');
-
-      // Re-enable for other tests
-      MayrEvents.debugMode(true);
-
-      // Test passes if no errors occur
-      expect(true, true);
-    });
   });
 }

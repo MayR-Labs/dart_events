@@ -85,14 +85,8 @@ class MayrEvents {
   /// Prints debug messages with the [MayrEvents] prefix.
   ///
   /// Only prints when debug mode is enabled.
-  ///
-  /// ```dart
-  /// MayrEvents.debugPrint('Custom debug message');
-  /// ```
-  static void debugPrint(String message) {
-    if (_instance._debugMode) {
-      print('[MayrEvents] - $message');
-    }
+  void _debugPrint(String message) {
+    if (_instance._debugMode) print('[MayrEvents] - $message');
   }
 
   /// Registers a listener for a specific event type.
@@ -101,8 +95,11 @@ class MayrEvents {
   /// MayrEvents.on<UserRegisteredEvent>(SendWelcomeEmailListener());
   /// ```
   static void on<T extends MayrEvent>(MayrListener<T> listener) {
+    _instance._debugPrint(
+      'Registered listener ${listener.runtimeType} for event type $T',
+    );
+
     _instance._listeners.putIfAbsent(T, () => []).add(listener);
-    debugPrint('Registered listener ${listener.runtimeType} for event type $T');
   }
 
   /// Adds a beforeHandle callback with a key.
@@ -199,16 +196,18 @@ class MayrEvents {
   static Future<void> fire<T extends MayrEvent>(T event) async {
     final eventType = event.runtimeType;
     final listeners = _instance._listeners[eventType] ?? [];
-    debugPrint('Firing event $eventType to ${listeners.length} listener(s)');
+
+    _instance._debugPrint(
+      'Firing event $eventType to ${listeners.length} listener(s)',
+    );
 
     for (final listener in List<MayrListener>.of(listeners)) {
       // Check event-level shouldHandle if it exists
-      if (event.shouldHandle != null && !event.shouldHandle!(event)) {
-        continue;
-      }
+      if (event.shouldHandle != null && !event.shouldHandle!(event)) continue;
 
       // Check global shouldHandle callbacks
       bool shouldRun = true;
+
       for (final callback in _instance._shouldHandlers.values) {
         if (!callback(event)) {
           shouldRun = false;
@@ -216,9 +215,7 @@ class MayrEvents {
         }
       }
 
-      if (!shouldRun) {
-        continue;
-      }
+      if (!shouldRun) continue;
 
       // Run event-level beforeHandle if it exists
       if (event.beforeHandle != null) {
@@ -246,13 +243,14 @@ class MayrEvents {
         // Remove once-only listeners after successful execution
         if (listener.once) {
           _instance._listeners[eventType]?.remove(listener);
-          debugPrint('Removed once-only listener ${listener.runtimeType}');
+
+          _instance._debugPrint(
+            'Removed once-only listener ${listener.runtimeType}',
+          );
         }
       } catch (e, s) {
         // Run event-level error handler if it exists
-        if (event.onError != null) {
-          await event.onError!(event, e, s);
-        }
+        if (event.onError != null) await event.onError!(event, e, s);
 
         // Run global error handlers
         for (final callback in _instance._errorHandlers.values) {
@@ -265,14 +263,19 @@ class MayrEvents {
   /// Removes a specific listener for an event type.
   static void remove<T extends MayrEvent>(MayrListener<T> listener) {
     _instance._listeners[T]?.remove(listener);
-    debugPrint('Removed listener ${listener.runtimeType} for event type $T');
+
+    _instance._debugPrint(
+      'Removed listener ${listener.runtimeType} for event type $T',
+    );
   }
 
   /// Removes all listeners for a specific event type.
   static void removeAll<T extends MayrEvent>() {
     final count = _instance._listeners[T]?.length ?? 0;
+
     _instance._listeners.remove(T);
-    debugPrint('Removed all $count listener(s) for event type $T');
+
+    _instance._debugPrint('Removed all $count listener(s) for event type $T');
   }
 
   /// Clears all registered listeners and handlers.
@@ -281,13 +284,17 @@ class MayrEvents {
       0,
       (sum, listeners) => sum + listeners.length,
     );
+
     _instance._listeners.clear();
     _instance._beforeHandlers.clear();
     _instance._errorHandlers.clear();
     _instance._shouldHandlers.clear();
     _instance._queueConfig = null;
     _instance._queueWorkers.clear();
-    debugPrint('Cleared all listeners and handlers (total: $totalListeners)');
+
+    _instance._debugPrint(
+      'Cleared all listeners and handlers (total: $totalListeners)',
+    );
   }
 
   /// Returns the number of listeners registered for an event type.
@@ -326,9 +333,7 @@ class MayrEvents {
     // Create error handler that calls both event and global error handlers
     Future<void> handleError(T evt, Object error, StackTrace stack) async {
       // Run event-level error handler if it exists
-      if (event.onError != null) {
-        await event.onError!(evt, error, stack);
-      }
+      if (event.onError != null) await event.onError!(evt, error, stack);
 
       // Run global error handlers
       for (final callback in _errorHandlers.values) {
