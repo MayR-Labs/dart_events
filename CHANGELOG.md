@@ -1,3 +1,9 @@
+## 2.1.1
+
+### README.md update
+
+- Updated the `README.md`
+
 ## 2.1.0
 
 ### 🐛 Bug Fixes

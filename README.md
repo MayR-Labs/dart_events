@@ -31,7 +31,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  mayr_events: ^2.0.0
+  mayr_events: ^2.1.1
 ```
 
 Then import:
@@ -67,6 +67,11 @@ void setupEvents() {
     // Return false to prevent listener execution
     return true;
   });
+
+  // Turn on debug mode;
+  // By default, this is on on debug mode and logs key actions
+  // to the console for debug purposes
+  MayrEvents.debugMode(kDebugMode);
 }
 ```
 
@@ -289,7 +294,7 @@ class ProcessOrderListener extends MayrListener<OrderPlacedEvent> {
 
 void setupEvents() {
   MayrEvents.on<OrderPlacedEvent>(ProcessOrderListener());
-  
+
   MayrEvents.beforeHandle('logger', (event, listener) async {
     print('[${DateTime.now()}] Event fired');
   });
