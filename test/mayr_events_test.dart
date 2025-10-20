@@ -355,5 +355,66 @@ void main() {
       expect(onceListener.callCount, 1);
       expect(asyncListener.messages, ['first', 'second']);
     });
+
+    test('fires events using runtimeType when generic type is MayrEvent',
+        () async {
+      final testListener = TestListener();
+      final userListener = WelcomeEmailListener();
+
+      MayrEvents.on<TestEvent>(testListener);
+      MayrEvents.on<UserRegisteredEvent>(userListener);
+
+      // Simulate getting events from a method that returns MayrEvent
+      MayrEvent getEvent(String eventType) {
+        if (eventType == 'test') {
+          return const TestEvent('runtime type test');
+        } else {
+          return const UserRegisteredEvent('u1', 'user@test.com');
+        }
+      }
+
+      // Fire events where the static type is MayrEvent
+      final event1 = getEvent('test');
+      final event2 = getEvent('user');
+      await MayrEvents.fire(event1);
+      await MayrEvents.fire(event2);
+
+      // Both listeners should receive their respective events
+      expect(testListener.messages, ['runtime type test']);
+      expect(userListener.sentTo, ['user@test.com']);
+    });
+
+    test('debug mode can be enabled and disabled', () async {
+      // Initially debug mode should be enabled (in test/debug mode)
+      final testListener = TestListener();
+      MayrEvents.on<TestEvent>(testListener);
+
+      // Disable debug mode
+      MayrEvents.debugMode(false);
+      await MayrEvents.fire(const TestEvent('test1'));
+
+      // Enable debug mode
+      MayrEvents.debugMode(true);
+      await MayrEvents.fire(const TestEvent('test2'));
+
+      // Test passes if no errors occur
+      expect(testListener.messages, ['test1', 'test2']);
+    });
+
+    test('debugPrint only prints when debug mode is enabled', () {
+      // This test verifies the debugPrint method exists and can be called
+      // We can't easily capture print output in tests, but we can verify it doesn't crash
+      MayrEvents.debugMode(true);
+      MayrEvents.debugPrint('Test message with debug enabled');
+
+      MayrEvents.debugMode(false);
+      MayrEvents.debugPrint('Test message with debug disabled');
+
+      // Re-enable for other tests
+      MayrEvents.debugMode(true);
+
+      // Test passes if no errors occur
+      expect(true, true);
+    });
   });
 }

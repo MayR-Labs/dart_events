@@ -55,6 +55,46 @@ class MayrEvents {
   /// Active queue workers.
   final Map<String, QueueWorker> _queueWorkers = {};
 
+  /// Debug mode flag for printing debug information.
+  /// Defaults to true when assertions are enabled (debug mode).
+  bool _debugMode = _defaultDebugMode;
+
+  /// Default debug mode based on whether assertions are enabled.
+  static bool get _defaultDebugMode {
+    bool debugMode = false;
+    assert(() {
+      debugMode = true;
+      return true;
+    }());
+    return debugMode;
+  }
+
+  /// Sets debug mode for printing debug information.
+  ///
+  /// When enabled, prints key actions to help with debugging.
+  /// Defaults to true when assertions are enabled (debug mode).
+  ///
+  /// ```dart
+  /// MayrEvents.debugMode(true); // Enable debug output
+  /// MayrEvents.debugMode(false); // Disable debug output
+  /// ```
+  static void debugMode(bool enabled) {
+    _instance._debugMode = enabled;
+  }
+
+  /// Prints debug messages with the [MayrEvents] prefix.
+  ///
+  /// Only prints when debug mode is enabled.
+  ///
+  /// ```dart
+  /// MayrEvents.debugPrint('Custom debug message');
+  /// ```
+  static void debugPrint(String message) {
+    if (_instance._debugMode) {
+      print('[MayrEvents] - $message');
+    }
+  }
+
   /// Registers a listener for a specific event type.
   ///
   /// ```dart
@@ -62,6 +102,7 @@ class MayrEvents {
   /// ```
   static void on<T extends MayrEvent>(MayrListener<T> listener) {
     _instance._listeners.putIfAbsent(T, () => []).add(listener);
+    debugPrint('Registered listener ${listener.runtimeType} for event type $T');
   }
 
   /// Adds a beforeHandle callback with a key.
@@ -156,7 +197,9 @@ class MayrEvents {
   /// await MayrEvents.fire(UserRegisteredEvent('user123', 'user@example.com'));
   /// ```
   static Future<void> fire<T extends MayrEvent>(T event) async {
-    final listeners = _instance._listeners[T] ?? [];
+    final eventType = event.runtimeType;
+    final listeners = _instance._listeners[eventType] ?? [];
+    debugPrint('Firing event $eventType to ${listeners.length} listener(s)');
 
     for (final listener in List<MayrListener>.of(listeners)) {
       // Check event-level shouldHandle if it exists
@@ -202,7 +245,8 @@ class MayrEvents {
 
         // Remove once-only listeners after successful execution
         if (listener.once) {
-          _instance._listeners[T]?.remove(listener);
+          _instance._listeners[eventType]?.remove(listener);
+          debugPrint('Removed once-only listener ${listener.runtimeType}');
         }
       } catch (e, s) {
         // Run event-level error handler if it exists
@@ -221,21 +265,29 @@ class MayrEvents {
   /// Removes a specific listener for an event type.
   static void remove<T extends MayrEvent>(MayrListener<T> listener) {
     _instance._listeners[T]?.remove(listener);
+    debugPrint('Removed listener ${listener.runtimeType} for event type $T');
   }
 
   /// Removes all listeners for a specific event type.
   static void removeAll<T extends MayrEvent>() {
+    final count = _instance._listeners[T]?.length ?? 0;
     _instance._listeners.remove(T);
+    debugPrint('Removed all $count listener(s) for event type $T');
   }
 
   /// Clears all registered listeners and handlers.
   static void clear() {
+    final totalListeners = _instance._listeners.values.fold<int>(
+      0,
+      (sum, listeners) => sum + listeners.length,
+    );
     _instance._listeners.clear();
     _instance._beforeHandlers.clear();
     _instance._errorHandlers.clear();
     _instance._shouldHandlers.clear();
     _instance._queueConfig = null;
     _instance._queueWorkers.clear();
+    debugPrint('Cleared all listeners and handlers (total: $totalListeners)');
   }
 
   /// Returns the number of listeners registered for an event type.
