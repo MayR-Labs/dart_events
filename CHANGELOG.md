@@ -1,4 +1,4 @@
-## 2.1.0 (Unreleased)
+## 2.1.0
 
 ### 🐛 Bug Fixes
 
@@ -9,7 +9,6 @@
 ### 🎉 Debug Mode
 
 - ✅ **NEW**: `MayrEvents.debugMode(bool)` - Enable/disable debug output
-- ✅ **NEW**: `MayrEvents.debugPrint(String)` - Print debug messages with `[MayrEvents] - ` prefix
 - ✅ Debug mode defaults to `true` when assertions are enabled (debug builds)
 - ✅ Debug mode defaults to `false` in release builds
 - ✅ Debug logging for key actions: `fire`, `on`, `remove`, `removeAll`, `clear`
@@ -25,10 +24,6 @@ MayrEvents.debugMode(true);
 await MayrEvents.fire(UserEvent());
 // Output: [MayrEvents] - Firing event UserEvent to 2 listener(s)
 
-// Custom debug messages
-MayrEvents.debugPrint('Processing completed');
-// Output: [MayrEvents] - Processing completed
-
 // Disable debug output (e.g., in production)
 MayrEvents.debugMode(false);
 ```
@@ -42,56 +37,6 @@ MayrEvent getEvent(String key) {
 
 final event = getEvent('user_registered'); // Type: MayrEvent
 await MayrEvents.fire(event); // Correctly dispatches to UserRegisteredEvent listeners
-```
-
-### 🎉 Queued Listeners
-
-- ✅ **NEW**: Queue system for background job processing
-- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
-- ✅ **NEW**: Multiple named queues with fallback support
-- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
-- ✅ **NEW**: Configurable timeout per listener
-- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
-- ✅ **NEW**: Mix queued and non-queued listeners
-- ✅ Comprehensive test coverage for queue functionality
-- ✅ Example demonstrating queue features
-
-### Listener Properties Added
-
-- `bool get queued` - Enable background queue processing
-- `String? get queue` - Specify target queue name
-- `Duration get timeout` - Job timeout duration (default: 60s)
-- `int get retries` - Retry count on failure (default: 3, max: 30)
-
-### Usage
-
-```dart
-void setupEvents() {
-  // Setup queues
-  MayrEvents.setupQueue(
-    fallbackQueue: 'default',
-    queues: ['emails', 'notifications'],
-    defaultTimeout: Duration(seconds: 60),
-  );
-  
-  MayrEvents.on<OrderEvent>(ProcessOrderListener());
-}
-
-class ProcessOrderListener extends MayrListener<OrderEvent> {
-  @override
-  bool get queued => true;
-  
-  @override
-  String get queue => 'orders';
-  
-  @override
-  int get retries => 5;
-  
-  @override
-  Future<void> handle(OrderEvent event) async {
-    // Process in background with automatic retry
-  }
-}
 ```
 
 ---
@@ -130,6 +75,56 @@ void main() {
 }
 
 await MayrEvents.fire(UserEvent());
+```
+
+### 🎉 Queued Listeners
+
+- ✅ **NEW**: Queue system for background job processing
+- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
+- ✅ **NEW**: Multiple named queues with fallback support
+- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
+- ✅ **NEW**: Configurable timeout per listener
+- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
+- ✅ **NEW**: Mix queued and non-queued listeners
+- ✅ Comprehensive test coverage for queue functionality
+- ✅ Example demonstrating queue features
+
+### Listener Properties Added
+
+- `bool get queued` - Enable background queue processing
+- `String? get queue` - Specify target queue name
+- `Duration get timeout` - Job timeout duration (default: 60s)
+- `int get retries` - Retry count on failure (default: 3, max: 30)
+
+### Usage
+
+```dart
+void setupEvents() {
+  // Setup queues
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+
+  MayrEvents.on<OrderEvent>(ProcessOrderListener());
+}
+
+class ProcessOrderListener extends MayrListener<OrderEvent> {
+  @override
+  bool get queued => true;
+
+  @override
+  String get queue => 'orders';
+
+  @override
+  int get retries => 5;
+
+  @override
+  Future<void> handle(OrderEvent event) async {
+    // Process in background with automatic retry
+  }
+}
 ```
 
 ### Updated
