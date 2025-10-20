@@ -1,53 +1,42 @@
-## 2.1.0 (Unreleased)
+## 2.1.0
 
-### 🎉 Queued Listeners
+### 🐛 Bug Fixes
 
-- ✅ **NEW**: Queue system for background job processing
-- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
-- ✅ **NEW**: Multiple named queues with fallback support
-- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
-- ✅ **NEW**: Configurable timeout per listener
-- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
-- ✅ **NEW**: Mix queued and non-queued listeners
-- ✅ Comprehensive test coverage for queue functionality
-- ✅ Example demonstrating queue features
+- **FIXED**: Event dispatching now uses `event.runtimeType` instead of generic type `T`
+  - Fixes issue where events returned from methods with `MayrEvent` return type weren't dispatched correctly
+  - Listeners now properly receive events regardless of the variable's static type
 
-### Listener Properties Added
+### 🎉 Debug Mode
 
-- `bool get queued` - Enable background queue processing
-- `String? get queue` - Specify target queue name
-- `Duration get timeout` - Job timeout duration (default: 60s)
-- `int get retries` - Retry count on failure (default: 3, max: 30)
+- ✅ **NEW**: `MayrEvents.debugMode(bool)` - Enable/disable debug output
+- ✅ Debug mode defaults to `true` when assertions are enabled (debug builds)
+- ✅ Debug mode defaults to `false` in release builds
+- ✅ Debug logging for key actions: `fire`, `on`, `remove`, `removeAll`, `clear`
 
 ### Usage
 
+**Debug Mode:**
 ```dart
-void setupEvents() {
-  // Setup queues
-  MayrEvents.setupQueue(
-    fallbackQueue: 'default',
-    queues: ['emails', 'notifications'],
-    defaultTimeout: Duration(seconds: 60),
-  );
-  
-  MayrEvents.on<OrderEvent>(ProcessOrderListener());
+// Enable debug output
+MayrEvents.debugMode(true);
+
+// Fire events with debug logging
+await MayrEvents.fire(UserEvent());
+// Output: [MayrEvents] - Firing event UserEvent to 2 listener(s)
+
+// Disable debug output (e.g., in production)
+MayrEvents.debugMode(false);
+```
+
+**Runtime Type Fix:**
+```dart
+// This now works correctly!
+MayrEvent getEvent(String key) {
+  return UserRegisteredEvent('user123', 'user@example.com');
 }
 
-class ProcessOrderListener extends MayrListener<OrderEvent> {
-  @override
-  bool get queued => true;
-  
-  @override
-  String get queue => 'orders';
-  
-  @override
-  int get retries => 5;
-  
-  @override
-  Future<void> handle(OrderEvent event) async {
-    // Process in background with automatic retry
-  }
-}
+final event = getEvent('user_registered'); // Type: MayrEvent
+await MayrEvents.fire(event); // Correctly dispatches to UserRegisteredEvent listeners
 ```
 
 ---
@@ -86,6 +75,56 @@ void main() {
 }
 
 await MayrEvents.fire(UserEvent());
+```
+
+### 🎉 Queued Listeners
+
+- ✅ **NEW**: Queue system for background job processing
+- ✅ **NEW**: `MayrEvents.setupQueue()` for configuring queues
+- ✅ **NEW**: Multiple named queues with fallback support
+- ✅ **NEW**: Automatic retry mechanism (configurable, max 30)
+- ✅ **NEW**: Configurable timeout per listener
+- ✅ **NEW**: Queue worker lifecycle management (auto-cleanup)
+- ✅ **NEW**: Mix queued and non-queued listeners
+- ✅ Comprehensive test coverage for queue functionality
+- ✅ Example demonstrating queue features
+
+### Listener Properties Added
+
+- `bool get queued` - Enable background queue processing
+- `String? get queue` - Specify target queue name
+- `Duration get timeout` - Job timeout duration (default: 60s)
+- `int get retries` - Retry count on failure (default: 3, max: 30)
+
+### Usage
+
+```dart
+void setupEvents() {
+  // Setup queues
+  MayrEvents.setupQueue(
+    fallbackQueue: 'default',
+    queues: ['emails', 'notifications'],
+    defaultTimeout: Duration(seconds: 60),
+  );
+
+  MayrEvents.on<OrderEvent>(ProcessOrderListener());
+}
+
+class ProcessOrderListener extends MayrListener<OrderEvent> {
+  @override
+  bool get queued => true;
+
+  @override
+  String get queue => 'orders';
+
+  @override
+  int get retries => 5;
+
+  @override
+  Future<void> handle(OrderEvent event) async {
+    // Process in background with automatic retry
+  }
+}
 ```
 
 ### Updated
