@@ -356,33 +356,35 @@ void main() {
       expect(asyncListener.messages, ['first', 'second']);
     });
 
-    test('fires events using runtimeType when generic type is MayrEvent',
-        () async {
-      final testListener = TestListener();
-      final userListener = WelcomeEmailListener();
+    test(
+      'fires events using runtimeType when generic type is MayrEvent',
+      () async {
+        final testListener = TestListener();
+        final userListener = WelcomeEmailListener();
 
-      MayrEvents.on<TestEvent>(testListener);
-      MayrEvents.on<UserRegisteredEvent>(userListener);
+        MayrEvents.on<TestEvent>(testListener);
+        MayrEvents.on<UserRegisteredEvent>(userListener);
 
-      // Simulate getting events from a method that returns MayrEvent
-      MayrEvent getEvent(String eventType) {
-        if (eventType == 'test') {
-          return const TestEvent('runtime type test');
-        } else {
-          return const UserRegisteredEvent('u1', 'user@test.com');
+        // Simulate getting events from a method that returns MayrEvent
+        MayrEvent getEvent(String eventType) {
+          if (eventType == 'test') {
+            return const TestEvent('runtime type test');
+          } else {
+            return const UserRegisteredEvent('u1', 'user@test.com');
+          }
         }
-      }
 
-      // Fire events where the static type is MayrEvent
-      final event1 = getEvent('test');
-      final event2 = getEvent('user');
-      await MayrEvents.fire(event1);
-      await MayrEvents.fire(event2);
+        // Fire events where the static type is MayrEvent
+        final event1 = getEvent('test');
+        final event2 = getEvent('user');
+        await MayrEvents.fire(event1);
+        await MayrEvents.fire(event2);
 
-      // Both listeners should receive their respective events
-      expect(testListener.messages, ['runtime type test']);
-      expect(userListener.sentTo, ['user@test.com']);
-    });
+        // Both listeners should receive their respective events
+        expect(testListener.messages, ['runtime type test']);
+        expect(userListener.sentTo, ['user@test.com']);
+      },
+    );
 
     test('debug mode can be enabled and disabled', () async {
       // Initially debug mode should be enabled (in test/debug mode)

@@ -1,5 +1,49 @@
 ## 2.1.0 (Unreleased)
 
+### 🐛 Bug Fixes
+
+- **FIXED**: Event dispatching now uses `event.runtimeType` instead of generic type `T`
+  - Fixes issue where events returned from methods with `MayrEvent` return type weren't dispatched correctly
+  - Listeners now properly receive events regardless of the variable's static type
+
+### 🎉 Debug Mode
+
+- ✅ **NEW**: `MayrEvents.debugMode(bool)` - Enable/disable debug output
+- ✅ **NEW**: `MayrEvents.debugPrint(String)` - Print debug messages with `[MayrEvents] - ` prefix
+- ✅ Debug mode defaults to `true` when assertions are enabled (debug builds)
+- ✅ Debug mode defaults to `false` in release builds
+- ✅ Debug logging for key actions: `fire`, `on`, `remove`, `removeAll`, `clear`
+
+### Usage
+
+**Debug Mode:**
+```dart
+// Enable debug output
+MayrEvents.debugMode(true);
+
+// Fire events with debug logging
+await MayrEvents.fire(UserEvent());
+// Output: [MayrEvents] - Firing event UserEvent to 2 listener(s)
+
+// Custom debug messages
+MayrEvents.debugPrint('Processing completed');
+// Output: [MayrEvents] - Processing completed
+
+// Disable debug output (e.g., in production)
+MayrEvents.debugMode(false);
+```
+
+**Runtime Type Fix:**
+```dart
+// This now works correctly!
+MayrEvent getEvent(String key) {
+  return UserRegisteredEvent('user123', 'user@example.com');
+}
+
+final event = getEvent('user_registered'); // Type: MayrEvent
+await MayrEvents.fire(event); // Correctly dispatches to UserRegisteredEvent listeners
+```
+
 ### 🎉 Queued Listeners
 
 - ✅ **NEW**: Queue system for background job processing
