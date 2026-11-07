@@ -31,5 +31,4 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 /build/
 /coverage/
-config.bat
 node_modules
